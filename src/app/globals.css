@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+/* Token dari Figma "Bengkel Anargya: Mobile" (variable collection Bengkel) */
+@theme {
+  --color-bg: #0c1211;
+  --color-surface: #121a18;
+  --color-surface-2: #1b2522;
+  --color-ink: #ece5d8;
+  --color-ink-2: rgb(236 229 216 / 0.68);
+  --color-line: rgb(236 229 216 / 0.14);
+  --color-green: #29d970;
+  --color-green-ink: #06130c;
+  --color-warn: #f2b84b;
+  --color-danger: #ff6b5e;
+  --font-sans: "Inter Variable", system-ui, sans-serif;
+  --font-mono: "Roboto Mono", ui-monospace, monospace;
+}
+
+:root {
+  color-scheme: dark;
+  --target-size: 24px;
+  --tabbar-h: 4.25rem;
+}
+@media (pointer: coarse) {
+  :root { --target-size: 44px; }
+}
+
+html {
+  background: var(--color-bg);
+  /* fokus tidak tertutup tab bar */
+  scroll-padding-bottom: calc(var(--tabbar-h) + 1rem + env(safe-area-inset-bottom, 0px));
+}
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  overflow-wrap: break-word;
+  -webkit-tap-highlight-color: transparent;
+}
+h1, h2, h3 { text-wrap: balance; }
+p, li { text-wrap: pretty; }
+img { max-inline-size: 100%; block-size: auto; }
+
+:where(button, select, textarea, input:not([type="checkbox"], [type="radio"]), [role="button"], nav a) {
+  min-block-size: var(--target-size);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-green);
+  outline-offset: 3px;
+}
+
+input, select, textarea { font: inherit; }
+input:user-invalid, select:user-invalid { border-color: var(--color-danger); }
+
+@layer components {
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  .title {
+    font-weight: 900;
+    font-size: 1.875rem;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  .field-label {
+    display: block;
+    margin-block-end: 0.375rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: var(--color-ink-2);
+  }
+  .input {
+    display: block;
+    inline-size: 100%;
+    min-block-size: 52px;
+    padding: 0 0.875rem;
+    border: 1px solid var(--color-line);
+    border-radius: 10px;
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-size: 1rem;
+  }
+  .input:focus { border-color: var(--color-green); outline: 1px solid var(--color-green); outline-offset: 0; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-block-size: 52px;
+    padding: 0 1.25rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .btn-primary { background: var(--color-green); color: var(--color-green-ink); }
+  .btn-primary:disabled { opacity: 0.6; }
+  .btn-line { border: 1px solid var(--color-line); color: var(--color-ink); }
+  .btn-sm { min-block-size: 44px; font-size: 0.9375rem; }
+  .card { background: var(--color-surface); border-radius: 12px; }
+  .mono { font-family: var(--font-mono); }
+
+  /* Segmented control dari radio asli: tetap bisa dipakai keyboard & screen reader */
+  .segmented {
+    display: grid;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid var(--color-line);
+    border-radius: 12px;
+    background: var(--color-surface);
+  }
+  .segmented label {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-block-size: 52px;
+    padding: 0.5rem;
+    border-radius: 9px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .segmented input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+  .segmented small { color: var(--color-ink-2); }
+  .segmented label:has(input:checked) { background: var(--color-green); color: var(--color-green-ink); }
+  .segmented label:has(input:checked) small { color: var(--color-green-ink); }
+  .segmented label:has(input:focus-visible) { outline: 2px solid var(--color-green); outline-offset: 2px; }
+  .segmented label:has(input:disabled) { opacity: 0.45; cursor: not-allowed; }
+}
