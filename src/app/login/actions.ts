@@ -9,7 +9,13 @@ export async function signIn(_: string | null, form: FormData): Promise<string |
     email: String(form.get("email") ?? "").trim(),
     password: String(form.get("password") ?? ""),
   });
-  if (error) return "Email atau kata sandi salah.";
+  if (error) {
+    if (error.code === "invalid_credentials") return "Email atau kata sandi salah.";
+    if (error.code === "email_not_confirmed") return "Email belum dikonfirmasi. Minta PLSS mengaktifkan akun.";
+    // Error lain (env server salah, Supabase tidak terjangkau): tampilkan apa adanya supaya mudah dilacak
+    console.error("signIn", error.code, error.message);
+    return `Login gagal: ${error.message}`;
+  }
   redirect("/");
 }
 

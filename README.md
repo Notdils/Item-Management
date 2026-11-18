@@ -98,6 +98,7 @@ Import repo, isi env `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHAB
 supabase/
   migrations/…_init.sql   skema, constraint, trigger, RPC, view, RLS, storage
   bootstrap.sql           jadikan akun pertama PLSS
+  seed_admin.sql          buat / reset akun admin PLSS dari SQL Editor
   seed_demo.sql           data demo (opsional)
   tests/                  tes skema + konkurensi
 src/
