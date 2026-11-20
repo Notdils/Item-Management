@@ -17,10 +17,10 @@ const badgeVariants = cva(
           "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         link: "text-primary underline-offset-4 [a&]:hover:underline",
-        // Status barang: kalimat biasa, warna sesuai keadaan; "warn" diberi latar supaya menonjol
-        ok: "rounded-none px-0 py-0 text-[13px] font-semibold text-ok",
-        warn: "rounded-sm bg-warn/12 px-2 py-0.5 text-[13px] font-semibold text-warn",
-        muted: "rounded-none px-0 py-0 text-[13px] font-medium text-muted-foreground",
+        // Status: teks mono kecil tanpa kotak (bukan tombol). Hijau = di rak, kuning = perlu perhatian
+        ok: "rounded-none px-0 py-0 font-mono text-xs text-primary",
+        warn: "rounded-none px-0 py-0 font-mono text-xs text-warn",
+        muted: "rounded-none px-0 py-0 font-mono text-xs text-muted-foreground",
       },
     },
     defaultVariants: {

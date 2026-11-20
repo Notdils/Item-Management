@@ -45,7 +45,7 @@ export default async function StokPage() {
                   <Link href={`/barang/${l.item_id}`} className="flex items-center gap-3 px-3.5 py-3.5">
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[15px] font-semibold">{l.name}</span>
-                      <span className="flex items-center gap-2 text-sm text-muted-foreground"><span className="tape text-xs">{l.location_code}</span>{l.location_name}</span>
+                      <span className="flex items-center gap-2 text-sm text-muted-foreground"><span className="rack text-xs">{l.location_code}</span>{l.location_name}</span>
                     </span>
                     <span className="text-right">
                       <span className={cn("block font-mono text-[22px] font-medium", l.qty === 0 && "text-warn")}>{l.qty}</span>
@@ -66,7 +66,7 @@ export default async function StokPage() {
                 {levels.map((l) => (
                   <TableRow key={`${l.item_id}-${l.location_id}`}>
                     <TableCell><Link href={`/barang/${l.item_id}`} className="font-semibold hover:underline">{l.name}</Link></TableCell>
-                    <TableCell><span className="flex items-center gap-2"><span className="tape text-xs">{l.location_code}</span>{l.location_name}</span></TableCell>
+                    <TableCell><span className="flex items-center gap-2"><span className="rack text-xs">{l.location_code}</span>{l.location_name}</span></TableCell>
                     <TableCell className={cn("font-mono text-[15px]", l.qty === 0 && "text-warn")}>{l.qty}</TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">{l.unit}</TableCell>
                     <TableCell className="hidden font-mono text-xs text-muted-foreground lg:table-cell">{fmtAgo(l.last_move_at)}</TableCell>

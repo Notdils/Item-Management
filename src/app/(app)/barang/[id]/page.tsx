@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Hand, PackageOpen } from "lucide-react";
+import { ChevronLeft, Hand, MapPin, PackageOpen } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signPhotos } from "@/lib/photos";
 import { fmtAgo, fmtShort } from "@/lib/format";
@@ -46,7 +46,7 @@ export default async function BarangPage({ params }: { params: Promise<{ id: str
           <Card className="gap-0 p-0">
             {lv.map((l) => (
               <div key={l.location_id} className="flex items-center justify-between border-b px-4 py-3.5 last:border-b-0">
-                <span className="flex items-center gap-2"><span className="tape text-sm">{l.location_code}</span> <span className="text-sm text-muted-foreground">{l.location_name}</span></span>
+                <span className="flex items-center gap-2"><span className="rack text-sm">{l.location_code}</span> <span className="text-sm text-muted-foreground">{l.location_name}</span></span>
                 <span className="font-mono text-xl font-medium">{l.qty}</span>
               </div>
             ))}
@@ -89,11 +89,11 @@ export default async function BarangPage({ params }: { params: Promise<{ id: str
           <Head label={`Alat nomor ${item.id}`} name={item.name} />
 
           {last ? (
-            <Card className={cn("border-l-4", placed ? "border-l-ok" : "border-l-warn")}>
+            <Card className={cn("border-l-4", placed ? "border-l-primary" : "border-l-warn")}>
               <CardHeader className="gap-1.5">
                 <p className="text-sm text-muted-foreground">{placed ? "Sekarang ada di" : "Sedang dibawa"}</p>
                 <CardTitle className="flex flex-wrap items-center gap-2.5 text-xl">
-                  {placed ? <><span className="tape text-2xl">{last.locations?.code}</span> <span className="font-semibold">{last.locations?.name}</span></>
+                  {placed ? <><MapPin aria-hidden className="size-5 text-primary" /><span className="rack text-xl">{last.locations?.code}</span> <span className="font-semibold">{last.locations?.name}</span></>
                     : <><Hand aria-hidden className="size-5 text-warn" /> {last.profiles?.full_name}</>}
                 </CardTitle>
                 <CardDescription className="text-sm">
@@ -169,7 +169,7 @@ function History({ title, entries }: { title: string; entries: Entry[] }) {
             <Badge variant={e.tone} className="w-20 shrink-0">{e.action}</Badge>
             <div className="min-w-0 flex-1">
               <p className="font-medium">{e.where}</p>
-              <p className="text-sm text-muted-foreground">{e.who}, {e.when}{e.note ? `. ${e.note}` : ""}</p>
+              <p className="text-sm text-muted-foreground">{e.who}, <span className="font-mono text-xs">{e.when}</span>{e.note ? `. ${e.note}` : ""}</p>
             </div>
             {e.photo !== undefined && <Thumb src={e.photo} size={40} />}
           </li>

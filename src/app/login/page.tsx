@@ -18,19 +18,19 @@ export default async function LoginPage() {
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-2">
-      <aside className="hidden flex-col justify-between bg-primary p-16 text-primary-foreground lg:flex">
-        <p className="flex items-baseline gap-2"><span className="text-[26px] font-extrabold leading-none [font-stretch:72%]">Bengkel</span><span className="text-sm opacity-70">Anargya EV</span></p>
+      <aside className="hidden flex-col justify-between border-r border-border bg-card p-16 lg:flex">
+        <p className="text-lg font-extrabold tracking-tight">Bengkel Anargya</p>
         <div className="flex max-w-lg flex-col gap-4">
-          <p className="title text-6xl">Barang bengkel selalu ketemu raknya.</p>
-          <p className="text-[17px] opacity-75">
+          <p className="title text-5xl">Catat di mana barang bengkel berada.</p>
+          <p className="text-[17px] text-muted-foreground">
             Foto barang di raknya, pilih Taruh atau Ambil. Waktu dan lokasi terisi otomatis, PLSS tinggal mencari.
           </p>
         </div>
-        <p className="flex items-center gap-2 text-sm"><span className="opacity-75">Contoh:</span> <span className="tape text-sm">RAK-A1</span> <span className="opacity-75">Kunci torsi, ditaruh Budi 5 menit lalu</span></p>
+        <p className="text-sm text-muted-foreground">Anargya ITS EV Team</p>
       </aside>
       <main className="mx-auto flex max-w-md flex-col gap-7 px-4 pb-10 pt-[max(6rem,env(safe-area-inset-top))] md:max-w-[480px] md:pt-48 lg:max-w-[400px] lg:justify-center lg:px-0 lg:py-16">
         <header className="flex flex-col gap-2">
-          <p className="flex items-baseline gap-2 lg:hidden"><span className="text-[26px] font-extrabold leading-none [font-stretch:72%]">Bengkel</span><span className="text-sm text-muted-foreground">Anargya EV</span></p>
+          <p className="text-lg font-extrabold tracking-tight lg:hidden">Bengkel Anargya</p>
           <h1 className="title">
             <span className="lg:hidden">Masuk untuk lapor barang</span>
             <span className="hidden lg:inline">Masuk</span>

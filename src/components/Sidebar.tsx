@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Camera, Hand, Package, Search, User, type LucideIcon } from "lucide-react";
+import { Camera, ChevronRight, Hand, Package, Search, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV: { href: string; label: string; icon: LucideIcon }[] = [
@@ -10,37 +10,54 @@ const NAV: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/cari", label: "Cari", icon: Search },
   { href: "/dipegang", label: "Dipegang", icon: Hand },
   { href: "/stok", label: "Stok", icon: Package },
-  { href: "/akun", label: "Akun", icon: User },
 ];
 
 const isActive = (path: string, href: string) =>
   href === "/" ? path === "/" : path.startsWith(href) || (href === "/cari" && path.startsWith("/barang"));
 
-function Wordmark() {
+const initials = (name: string) =>
+  name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("") || "?";
+
+const divisionLabel = (d: string) => (d === "PLSS" ? "PLSS, admin data" : "Teknikal");
+
+function Avatar({ name, className }: { name: string; className?: string }) {
   return (
-    <p className="flex items-baseline gap-2">
-      <span className="text-[26px] font-extrabold leading-none [font-stretch:72%]">Bengkel</span>
-      <span className="text-sm text-muted-foreground">Anargya EV</span>
+    <span aria-hidden className={cn("grid size-9 shrink-0 place-items-center rounded-full bg-accent text-sm font-bold text-foreground", className)}>
+      {initials(name)}
+    </span>
+  );
+}
+
+function Brand() {
+  return (
+    <p className="flex flex-col">
+      <span className="text-lg font-extrabold leading-tight tracking-tight">Bengkel Anargya</span>
+      <span className="text-[13px] text-muted-foreground">Manajemen barang</span>
     </p>
   );
 }
 
-// Navigasi desktop (>= 1024px). Semua menu setara; aksi utama ada di halaman, bukan di sidebar.
+// Penanda aktif yang sama untuk semua menu, termasuk blok akun: garis hijau kiri + teks hijau
+const navItem = (on: boolean) =>
+  cn("relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-[15px] font-medium",
+    on ? "bg-accent text-primary before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-full before:bg-primary"
+      : "text-muted-foreground hover:bg-accent/60 hover:text-foreground");
+
+// Navigasi desktop (>= 1024px). Akun = blok profil di kiri bawah (pola umum Slack/Notion/Vercel).
 export function Sidebar({ name, division }: { name: string; division: string }) {
   const path = usePathname();
+  const onAkun = path.startsWith("/akun");
   return (
-    <aside className="sticky top-0 hidden h-dvh w-[232px] shrink-0 flex-col gap-8 border-r px-4 pt-9 pb-6 lg:flex">
-      <div className="pl-3"><Wordmark /></div>
+    <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col gap-8 border-r bg-card px-4 pt-8 pb-4 lg:flex">
+      <div className="pl-3"><Brand /></div>
       <nav aria-label="Menu utama">
-        <ul className="flex flex-col gap-0.5">
+        <ul className="flex flex-col gap-1">
           {NAV.map(({ href, label, icon: Icon }) => {
             const on = isActive(path, href);
             return (
               <li key={href}>
-                <Link href={href} aria-current={on ? "page" : undefined}
-                  className={cn("flex min-h-11 items-center gap-3 rounded-md px-3 text-[15px] font-medium",
-                    on ? "bg-primary text-primary-foreground" : "text-foreground/75 hover:bg-accent hover:text-foreground")}>
-                  <Icon aria-hidden className="size-[18px]" />
+                <Link href={href} aria-current={on ? "page" : undefined} className={navItem(on)}>
+                  <Icon aria-hidden className="size-5" />
                   {label}
                 </Link>
               </li>
@@ -48,20 +65,31 @@ export function Sidebar({ name, division }: { name: string; division: string }) 
           })}
         </ul>
       </nav>
-      <div className="mt-auto border-t pt-4 pl-3">
-        <p className="text-[15px] font-semibold">{name}</p>
-        <p className="text-sm text-muted-foreground">{division === "PLSS" ? "PLSS, admin data" : "Teknikal"}</p>
-      </div>
+      <Link href="/akun" aria-current={onAkun ? "page" : undefined} aria-label={`Akun: ${name}`}
+        className={cn(navItem(onAkun), "mt-auto min-h-14 py-2")}>
+        <Avatar name={name} className={onAkun ? "bg-primary text-primary-foreground" : undefined} />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[15px] font-semibold text-foreground">{name}</span>
+          <span className="block truncate text-[13px] text-muted-foreground">{divisionLabel(division)}</span>
+        </span>
+        <ChevronRight aria-hidden className="size-4 text-muted-foreground" />
+      </Link>
     </aside>
   );
 }
 
-// Header tablet (768-1023px)
+// Header tablet (768-1023px): akun di kanan atas
 export function TopBar({ name, division }: { name: string; division: string }) {
+  const path = usePathname();
   return (
-    <header className="sticky top-0 z-20 hidden h-16 items-center justify-between border-b bg-background/95 px-12 backdrop-blur md:flex lg:hidden">
-      <Wordmark />
-      <p className="text-sm"><span className="font-semibold">{name}</span> <span className="text-muted-foreground">({division})</span></p>
+    <header className="sticky top-0 z-20 hidden h-16 items-center justify-between border-b bg-card px-12 md:flex lg:hidden">
+      <Brand />
+      <Link href="/akun" aria-current={path.startsWith("/akun") ? "page" : undefined} aria-label={`Akun: ${name}`}
+        className="flex min-h-11 items-center gap-2.5 rounded-full py-1 pr-3 pl-1 hover:bg-accent">
+        <Avatar name={name} className="size-8 text-xs" />
+        <span className="text-sm font-semibold">{name}</span>
+        <span className="text-[13px] text-muted-foreground">{division}</span>
+      </Link>
     </header>
   );
 }

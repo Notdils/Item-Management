@@ -34,7 +34,7 @@ export default async function LaporPage({ searchParams }: { searchParams: Promis
   const header = (
     <header className="flex flex-col gap-3">
       <h1 className="title">Lapor barang</h1>
-      <p className="max-w-[52ch] text-base text-muted-foreground">Taruh atau ambil barang? Foto, isi nama, kirim. Biar PLSS tahu posisinya.</p>
+      <p className="max-w-[52ch] text-base text-muted-foreground">Taruh atau ambil barang: foto, isi nama, kirim. PLSS langsung tahu posisinya.</p>
     </header>
   );
   const aside = recentRows.length > 0 ? (

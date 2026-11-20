@@ -9,7 +9,7 @@ const alertVariants = cva(
       variant: {
         default: "bg-card text-card-foreground",
         // Figma: kartu bergaris hijau (berhasil) / kuning (peringatan)
-        success: "border-ok bg-card text-card-foreground",
+        success: "border-primary bg-card text-card-foreground",
         warning: "border-warn bg-card text-card-foreground",
         destructive:
           "bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 [&>svg]:text-current",

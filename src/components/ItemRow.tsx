@@ -23,7 +23,7 @@ export function ItemRow({ href, name, place, meta, status, tone = "ok", photo }:
   href?: string; name: string; place?: string | null; meta: string; status: string; tone?: Tone; photo?: string | null;
 }) {
   return (
-    <Card className={cn("relative flex-row items-center gap-3 p-3", href && "hover:bg-white")}>
+    <Card className={cn("relative flex-row items-center gap-3 p-3", href && "hover:bg-accent")}>
       <Thumb src={photo} />
       <div className="min-w-0 flex-1">
         {href ? (
@@ -32,7 +32,7 @@ export function ItemRow({ href, name, place, meta, status, tone = "ok", photo }:
           <p className="truncate text-base font-semibold">{name}</p>
         )}
         <p className="mt-1 flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
-          {place && <span className="tape text-xs">{place}</span>}
+          {place && <span className="rack text-xs">{place}</span>}
           <span className="truncate">{meta}</span>
         </p>
       </div>

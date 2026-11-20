@@ -27,7 +27,7 @@ export function TabBar() {
             return (
               <li key={href} className="grid place-items-center">
                 <Link href="/" aria-label="Foto barang" aria-current={active ? "page" : undefined}
-                  className="grid size-13 place-items-center rounded-full bg-primary text-primary-foreground shadow-[0_0_0_4px_var(--card)] -mt-5">
+                  className="grid size-12 place-items-center rounded-full bg-primary text-primary-foreground">
                   <Icon aria-hidden />
                 </Link>
               </li>
@@ -36,7 +36,7 @@ export function TabBar() {
           return (
             <li key={href}>
               <Link href={href} aria-current={active ? "page" : undefined}
-                className={cn("flex flex-col items-center gap-1 pt-1.5 text-xs", active ? "font-semibold text-foreground" : "font-medium text-muted-foreground")}>
+                className={cn("flex flex-col items-center gap-1 pt-1.5 text-[11px] font-medium", active ? "text-primary" : "text-muted-foreground")}>
                 <Icon aria-hidden />
                 {label}
               </Link>

@@ -183,12 +183,12 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
       <>
         {header}
         {fileInput}
-        <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-10">
+        <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-10">
           <div className="flex flex-col gap-4">
             {prefill && (
               <Alert>
                 <AlertDescription>
-                  <p>{labelOf(prefill.action)}: <span className="font-semibold">{prefill.item}</span></p>
+                  <p>{labelOf(prefill.action)}: <span className="font-semibold text-primary">{prefill.item}</span></p>
                 </AlertDescription>
               </Alert>
             )}
@@ -197,30 +197,30 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
                 <AlertDescription><p className="text-foreground">Tersimpan. {done}</p></AlertDescription>
               </Alert>
             )}
-            {/* Satu aksi utama: panel tinta paling kontras di layar */}
+            {/* Aksi utama: satu-satunya bidang hijau besar di layar */}
             <label htmlFor={`${ids}-photo`}
-              className="photo-cta group flex min-h-56 cursor-pointer flex-col justify-between gap-10 rounded-xl bg-primary p-6 text-primary-foreground transition-colors hover:bg-[#2a2e2c] md:min-h-72 md:p-8 lg:min-h-80">
+              className="photo-cta flex min-h-56 cursor-pointer flex-col justify-between gap-10 rounded-2xl bg-primary p-6 text-primary-foreground transition-[filter] hover:brightness-105 md:min-h-72 md:p-8 lg:min-h-80">
               <Camera aria-hidden className="size-10 md:size-12" strokeWidth={1.75} />
               <span className="flex flex-col gap-2">
-                <span className="text-[34px] font-extrabold leading-none [font-stretch:72%] md:text-5xl">Foto barang</span>
-                <span className="text-[15px] text-primary-foreground/70">
+                <span className="text-[34px] font-black leading-none tracking-tight md:text-5xl">Foto barang</span>
+                <span className="text-[15px] font-medium opacity-75">
                   <span className="lg:hidden">Kamera langsung terbuka. Waktu dan rak terisi sendiri.</span>
                   <span className="hidden lg:inline">Pilih foto dari laptop atau pakai webcam. Waktu dan rak terisi sendiri.</span>
                 </span>
               </span>
             </label>
-            {/* Konteks otomatis: rak terakhir, bisa diganti 1 ketukan */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl bg-card p-4">
+            {/* Rak aktif: label, kode, dan nama dalam satu kartu; kode bisa diganti 1 ketukan */}
+            <div className="flex flex-wrap items-end gap-x-4 gap-y-3 rounded-xl bg-card p-4">
               <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <label htmlFor={`${ids}-rack`} className="text-sm text-muted-foreground">Ditaruh di rak</label>
                 <div className="relative w-fit">
                   <select id={`${ids}-rack`} value={locationId ?? ""} disabled={locations.length === 0}
                     onChange={(e) => { const v = Number(e.target.value); setLocationId(v); saveLastLocation(v); }}
-                    className="tape cursor-pointer appearance-none pr-8 text-xl">
+                    className="cursor-pointer appearance-none rounded-lg border-[1.5px] border-primary bg-transparent py-1.5 pr-10 pl-3 font-mono text-xl font-medium text-foreground">
                     {locations.length === 0 && <option value="">Belum ada rak</option>}
                     {locations.map((l) => <option key={l.id} value={l.id}>{l.code}</option>)}
                   </select>
-                  <ChevronDown aria-hidden className="pointer-events-none absolute top-1/2 right-2 size-4 -translate-y-1/2 text-[#1c1f1e]" />
+                  <ChevronDown aria-hidden className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-primary" />
                 </div>
                 {location && <p className="text-sm text-muted-foreground">{location.name}</p>}
               </div>
@@ -240,8 +240,8 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
         <Button type="button" variant="ghost" size="icon" onClick={reset} aria-label="Batal" className="-ml-2">
           <ChevronLeft />
         </Button>
-        <h1 className="flex-1 text-2xl font-extrabold [font-stretch:72%]">Laporan baru</h1>
-        <Button asChild variant="link" size="sm" className="lg:hidden">
+        <h1 className="flex-1 text-2xl font-black tracking-tight">Laporan baru</h1>
+        <Button asChild variant="outline" size="sm" className="lg:hidden">
           <label htmlFor={`${ids}-photo`}>{file ? "Foto ulang" : "Tambah foto"}</label>
         </Button>
       </div>
@@ -255,7 +255,7 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
             <span className="text-sm">{kind === "ALAT" && effAction === "TARUH" ? "Foto wajib untuk Taruh" : "Foto opsional"}</span>
           )}
         </div>
-        <Button asChild variant="link" size="sm" className="hidden w-fit px-0 lg:inline-flex">
+        <Button asChild variant="outline" size="sm" className="hidden w-fit lg:inline-flex">
           <label htmlFor={`${ids}-photo`}>{file ? "Foto ulang" : "Tambah foto"}</label>
         </Button>
       </div>

@@ -47,7 +47,7 @@ export default async function CariPage({ searchParams }: { searchParams: Promise
       </div>
 
       <section aria-label="Hasil" className="flex flex-col gap-2">
-        <p className="eyebrow text-muted-foreground" aria-live="polite">{rows.length} hasil</p>
+        <p className="text-sm text-muted-foreground" aria-live="polite">{rows.length} hasil</p>
         {rows.length === 0 ? (
           <Empty className="border">
             <EmptyHeader>
@@ -73,7 +73,7 @@ export default async function CariPage({ searchParams }: { searchParams: Promise
                       <TableRow key={r.id} className="relative">
                         <TableCell><Thumb src={photo(r)} size={40} /></TableCell>
                         <TableCell><Link href={`/barang/${r.id}`} className="font-semibold after:absolute after:inset-0">{r.name}</Link></TableCell>
-                        <TableCell>{s.place ? <span className="flex items-center gap-2"><span className="tape text-xs">{s.place}</span>{r.location_name}</span> : s.where}</TableCell>
+                        <TableCell>{s.place ? <span className="flex items-center gap-2"><span className="rack text-xs">{s.place}</span>{r.location_name}</span> : s.where}</TableCell>
                         <TableCell>{s.who}</TableCell>
                         <TableCell className="font-mono text-xs text-muted-foreground">{s.when}</TableCell>
                         <TableCell><Badge variant={s.tone}>{s.status}</Badge></TableCell>
