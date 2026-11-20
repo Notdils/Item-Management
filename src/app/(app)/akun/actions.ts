@@ -104,5 +104,6 @@ export async function updateName(f: FormData) {
   const { data } = await supabase.auth.getClaims();
   const { error } = await supabase.from("profiles").update({ full_name: s(f, "name") }).eq("id", data?.claims?.sub ?? "");
   if (error) back("/akun", { err: "Nama 2-80 huruf" });
-  back("/akun", { ok: "Nama disimpan" });
+  revalidatePath("/", "layout"); // nama di sidebar/top bar ikut berubah
+  back("/akun", { ok: `Nama disimpan: ${s(f, "name")}` });
 }

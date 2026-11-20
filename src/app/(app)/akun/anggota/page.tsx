@@ -1,8 +1,8 @@
+import { SubmitButton } from "@/components/Pending";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { requirePlss } from "@/lib/session";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ function DivisionButton({ p }: { p: Profile }) {
     <form action={setDivision}>
       <input type="hidden" name="id" value={p.id} />
       <input type="hidden" name="division" value={p.division === "PLSS" ? "TEKNIKAL" : "PLSS"} />
-      <Button variant="outline" size="sm">{p.division === "PLSS" ? "Jadikan teknikal" : "Jadikan PLSS"}</Button>
+      <SubmitButton variant="outline" size="sm" pendingText="Menyimpan...">{p.division === "PLSS" ? "Jadikan teknikal" : "Jadikan PLSS"}</SubmitButton>
     </form>
   );
 }
@@ -58,7 +58,7 @@ export default async function AnggotaPage({ searchParams }: { searchParams: Prom
                   <FieldLegend variant="label" className="sr-only">Divisi</FieldLegend>
                   <DivisionToggle />
                 </FieldSet>
-                <Button>Buat akun</Button>
+                <SubmitButton pendingText="Membuat akun...">Buat akun</SubmitButton>
               </FieldGroup>
             </form>
           </CardContent>

@@ -1,8 +1,8 @@
+import { SubmitButton } from "@/components/Pending";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { requirePlss } from "@/lib/session";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ function ToggleButton({ l }: { l: Location }) {
     <form action={toggleLocation}>
       <input type="hidden" name="id" value={l.id} />
       <input type="hidden" name="archive" value={l.archived_at ? "0" : "1"} />
-      <Button variant="outline" size="sm">{l.archived_at ? "Aktifkan" : "Arsip"}</Button>
+      <SubmitButton variant="outline" size="sm" pendingText="Menyimpan...">{l.archived_at ? "Aktifkan" : "Arsip"}</SubmitButton>
     </form>
   );
 }
@@ -51,7 +51,7 @@ export default async function LokasiPage({ searchParams }: { searchParams: Promi
                   <FieldLabel htmlFor="lname">Nama</FieldLabel>
                   <Input id="lname" name="name" required minLength={2} maxLength={80} placeholder="Lemari alat, rak 1" autoComplete="off" />
                 </Field>
-                <Button>Tambah lokasi</Button>
+                <SubmitButton pendingText="Menambahkan...">Tambah lokasi</SubmitButton>
               </FieldGroup>
             </form>
           </CardContent>

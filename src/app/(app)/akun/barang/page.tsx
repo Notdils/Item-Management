@@ -1,8 +1,8 @@
+import { SubmitButton } from "@/components/Pending";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { requirePlss } from "@/lib/session";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,7 @@ function RenameForm({ r, id }: { r: Row; id: string }) {
       <input type="hidden" name="id" value={r.id} />
       <label htmlFor={id} className="sr-only">Nama barang #{r.id}</label>
       <Input id={id} name="name" defaultValue={r.name} required minLength={2} maxLength={80} />
-      <Button variant="outline" size="sm">Simpan</Button>
+      <SubmitButton variant="outline" size="sm" pendingText="Menyimpan...">Simpan</SubmitButton>
     </form>
   );
 }
@@ -30,7 +30,7 @@ function ArchiveForm({ r }: { r: Row }) {
   return (
     <form action={archiveItem}>
       <input type="hidden" name="id" value={r.id} />
-      <Button variant="ghost" size="sm" className="text-destructive">Arsipkan</Button>
+      <SubmitButton variant="ghost" size="sm" className="text-destructive" pendingText="Mengarsip...">Arsipkan</SubmitButton>
     </form>
   );
 }
@@ -68,7 +68,7 @@ export default async function BarangAdminPage({ searchParams }: { searchParams: 
                     <NativeSelectOption value="" disabled>Pilih barang</NativeSelectOption>{options}
                   </NativeSelect>
                 </Field>
-                <Button>Gabungkan</Button>
+                <SubmitButton pendingText="Menggabungkan...">Gabungkan</SubmitButton>
               </FieldGroup>
             </form>
           </CardContent>

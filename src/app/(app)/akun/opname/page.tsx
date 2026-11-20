@@ -1,7 +1,8 @@
+import { SubmitButton } from "@/components/Pending";
+import { rackLabel } from "@/lib/format";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { requirePlss } from "@/lib/session";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -48,7 +49,7 @@ export default async function OpnamePage({ searchParams }: { searchParams: Promi
                   <FieldLabel htmlFor="location">Lokasi</FieldLabel>
                   <NativeSelect id="location" name="location" required defaultValue="">
                     <NativeSelectOption value="" disabled>Pilih lokasi</NativeSelectOption>
-                    {((locs.data ?? []) as Location[]).map((l) => <NativeSelectOption key={l.id} value={l.id}>{l.code} ({l.name})</NativeSelectOption>)}
+                    {((locs.data ?? []) as Location[]).map((l) => <NativeSelectOption key={l.id} value={l.id}>{rackLabel(l.code, l.name)}</NativeSelectOption>)}
                   </NativeSelect>
                 </Field>
                 <Field>
@@ -59,7 +60,7 @@ export default async function OpnamePage({ searchParams }: { searchParams: Promi
                   <FieldLabel htmlFor="note">Catatan (opsional)</FieldLabel>
                   <Input id="note" name="note" maxLength={280} />
                 </Field>
-                <Button>Simpan opname</Button>
+                <SubmitButton pendingText="Menyimpan...">Simpan opname</SubmitButton>
               </FieldGroup>
             </form>
           </CardContent>
@@ -71,7 +72,7 @@ export default async function OpnamePage({ searchParams }: { searchParams: Promi
             <ul>
               {stock.map((l) => (
                 <li key={`${l.item_id}-${l.location_id}`} className="flex justify-between border-b px-3.5 py-3 text-sm last:border-b-0">
-                  <span>{l.name} <span className="font-mono text-muted-foreground">· {l.location_code}</span></span>
+                  <span>{l.name} <span className="rack text-xs">{l.location_code}</span></span>
                   <span className="font-mono">{l.qty} {l.unit}</span>
                 </li>
               ))}

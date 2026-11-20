@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { compressPhoto, photoExt } from "@/lib/image";
-import { errMessage, fmtDateTime } from "@/lib/format";
+import { errMessage, fmtDateTime, rackExtra, rackLabel } from "@/lib/format";
 import type { ItemKind, ItemOption, Location, StockLevel } from "@/lib/types";
-import { Camera, ChevronDown, ChevronLeft, Clock, LocateFixed, MapPin, Minus, Plus, type LucideIcon } from "lucide-react";
+import { Camera, ChevronDown, ChevronLeft, CircleCheck, Undo2, Clock, LocateFixed, MapPin, Minus, Plus, type LucideIcon } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export type Action = "TARUH" | "AMBIL" | "PAKAI" | "MASUK";
-export type Prefill = { item: string; action: Exclude<Action, "MASUK"> };
+export type Prefill = { item: string; action: Exclude<Action, "MASUK">; locationId?: number; context?: string };
 
 type Gps = { state: "idle" | "loading" | "ok" | "off"; lat?: number; lng?: number; acc?: number };
 
@@ -49,7 +49,8 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
   const ids = useId();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [step, setStep] = useState<"start" | "form">("start");
+  // Datang dari tombol Taruh/Ambil/Pakai: langsung ke form yang sudah terisi
+  const [step, setStep] = useState<"start" | "form">(prefill ? "form" : "start");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [takenAt, setTakenAt] = useState<Date>(() => new Date());
@@ -65,13 +66,22 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<string | null>(null);
+  const [done, setDone] = useState<Done | null>(null);
+  const pathname = usePathname();
+
+  // Hasil kirim disimpan sebentar di sessionStorage: halaman dimuat ulang (prefill hilang) setelah kirim
+  useEffect(() => { setDone(takeDone()); }, []);
 
   // Lokasi default = rak terakhir yang dipilih di HP ini
   useEffect(() => {
+    const fromItem = prefill?.locationId;
     const last = readLastLocation();
-    setLocationId(last && locations.some((l) => l.id === last) ? last : locations[0]?.id ?? null);
-  }, [locations]);
+    const pick = [fromItem, last].find((v) => v && locations.some((l) => l.id === v));
+    setLocationId(pick ?? locations[0]?.id ?? null);
+  }, [locations, prefill?.locationId]);
+
+  // Form prefill langsung terbuka, jadi GPS dicari sejak awal
+  useEffect(() => { if (prefill) requestGps(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
 
@@ -84,6 +94,7 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
     kind === "ALAT" ? (action === "AMBIL" ? "AMBIL" : "TARUH")
     : action === "MASUK" || (isNew && isPlss) ? "MASUK" : "PAKAI";
   const needsLocation = effAction !== "AMBIL";
+  const locked = !!prefill && !!match && norm(name) === norm(prefill.item);
   const location = locations.find((l) => l.id === locationId) ?? null;
   const currentStock = kind === "HABIS_PAKAI" && match && locationId
     ? stock.find((s) => s.item_id === match.id && s.location_id === locationId)?.qty ?? 0
@@ -129,6 +140,11 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
     if (fileRef.current) fileRef.current.value = "";
   }
 
+  function cancel() {
+    reset();
+    if (prefill) router.replace(pathname, { scroll: false });
+  }
+
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
@@ -147,24 +163,30 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
         const up = await supabase.storage.from("photos").upload(photoPath, blob, { contentType: blob.type });
         if (up.error) throw up.error;
       }
+      let undo: Pick<Done, "reportId" | "moveId"> = {};
       const common = { p_item_name: name, p_photo_path: photoPath, p_taken_at: takenAt.toISOString(), p_note: note || null };
       if (kind === "ALAT") {
-        const { error } = await supabase.rpc("report_item", {
+        const { data: reportId, error } = await supabase.rpc("report_item", {
           ...common, p_kind: effAction, p_location_id: effAction === "TARUH" ? locationId : null,
           p_lat: gps.lat ?? null, p_lng: gps.lng ?? null, p_accuracy_m: gps.acc ?? null,
         });
         if (error) throw error;
+        undo = { reportId: reportId as number };
       } else {
-        const { error } = await supabase.rpc("move_stock", {
+        const { data: moved, error } = await supabase.rpc("move_stock", {
           ...common, p_kind: effAction, p_location_id: locationId, p_qty: qty, p_unit: isNew ? unit : null,
         });
         if (error) throw error;
+        undo = { moveId: (moved as { move_id: number }[])[0]?.move_id };
       }
       if (locationId && needsLocation) saveLastLocation(locationId);
       const where = effAction === "AMBIL" ? "kamu bawa" : location?.code;
-      setDone(`${name.trim()}: ${labelOf(effAction).toLowerCase()} (${where}).`);
+      const result: Done = { text: `${labelOf(effAction)} ${name.trim()}${kind === "HABIS_PAKAI" ? ` ${qty}` : ""}: ${where}.`, at: Date.now(), ...undo };
+      setDone(result);
+      keepDone(result);
       reset();
-      router.replace("/", { scroll: false });
+      router.replace(pathname, { scroll: false });
+      window.scrollTo({ top: 0 });
       router.refresh();
     } catch (err) {
       setError(errMessage(err));
@@ -192,11 +214,7 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
                 </AlertDescription>
               </Alert>
             )}
-            {done && (
-              <Alert variant="success" role="status">
-                <AlertDescription><p className="text-foreground">Tersimpan. {done}</p></AlertDescription>
-              </Alert>
-            )}
+            {done && <DoneNotice done={done} onClear={() => setDone(null)} />}
             {/* Aksi utama: satu-satunya bidang hijau besar di layar */}
             <label htmlFor={`${ids}-photo`}
               className="photo-cta flex min-h-56 cursor-pointer flex-col justify-between gap-10 rounded-2xl bg-primary p-6 text-primary-foreground transition-[filter] hover:brightness-105 md:min-h-72 md:p-8 lg:min-h-80">
@@ -222,7 +240,7 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
                   </select>
                   <ChevronDown aria-hidden className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-primary" />
                 </div>
-                {location && <p className="text-sm text-muted-foreground">{location.name}</p>}
+                {location && rackExtra(location.code, location.name) && <p className="text-sm text-muted-foreground">{location.name}</p>}
               </div>
               <Button type="button" variant="outline" onClick={openForm} className="w-full sm:w-auto">Lapor tanpa foto</Button>
             </div>
@@ -237,13 +255,15 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
     <form onSubmit={submit} noValidate className="flex flex-col gap-5 lg:grid lg:grid-cols-[480px_minmax(0,1fr)] lg:items-start lg:gap-x-8 lg:gap-y-6">
       {fileInput}
       <div className="flex items-center gap-2 lg:col-span-2">
-        <Button type="button" variant="ghost" size="icon" onClick={reset} aria-label="Batal" className="-ml-2">
+        <Button type="button" variant="ghost" size="icon" onClick={cancel} aria-label="Batal" className="-ml-2">
           <ChevronLeft />
         </Button>
-        <h1 className="flex-1 text-2xl font-black tracking-tight">Laporan baru</h1>
-        <Button asChild variant="outline" size="sm" className="lg:hidden">
-          <label htmlFor={`${ids}-photo`}>{file ? "Foto ulang" : "Tambah foto"}</label>
-        </Button>
+        <h1 className="flex-1 text-2xl font-black tracking-tight">{prefill ? `${labelOf(effAction)} barang` : "Laporan baru"}</h1>
+        {file && (
+          <Button asChild variant="outline" size="sm" className="lg:hidden">
+            <label htmlFor={`${ids}-photo`}>Foto ulang</label>
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">
@@ -252,15 +272,29 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
             // eslint-disable-next-line @next/next/no-img-element -- preview blob lokal
             <img src={preview} alt="Foto barang yang akan dilaporkan" className="absolute inset-0 size-full object-cover" />
           ) : (
-            <span className="text-sm">{kind === "ALAT" && effAction === "TARUH" ? "Foto wajib untuk Taruh" : "Foto opsional"}</span>
+            <label htmlFor={`${ids}-photo`} className="photo-cta absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-2 text-center">
+              <span className="grid size-14 place-items-center rounded-full bg-primary text-primary-foreground"><Camera aria-hidden /></span>
+              <span className="font-semibold text-foreground">Ketuk untuk foto</span>
+              <span className="text-sm">{kind === "ALAT" && effAction === "TARUH" ? "Wajib: foto barang di raknya" : "Opsional"}</span>
+            </label>
           )}
         </div>
-        <Button asChild variant="outline" size="sm" className="hidden w-fit lg:inline-flex">
-          <label htmlFor={`${ids}-photo`}>{file ? "Foto ulang" : "Tambah foto"}</label>
-        </Button>
+        {file && (
+          <Button asChild variant="outline" size="sm" className="hidden w-fit lg:inline-flex">
+            <label htmlFor={`${ids}-photo`}>Foto ulang</label>
+          </Button>
+        )}
       </div>
 
       <FieldGroup className="gap-5">
+        {locked ? (
+          // Barang dan aksi sudah pasti dari tombol sebelumnya: cukup ringkasan
+          <Card className="gap-1 border-l-4 border-l-primary">
+            <p className="text-sm text-muted-foreground">{labelOf(effAction)}</p>
+            <p className="text-xl font-bold">{name}</p>
+            {prefill?.context && <p className="text-sm text-muted-foreground">{prefill.context}</p>}
+          </Card>
+        ) : (
         <Field>
           <div className="flex items-center justify-between">
             <FieldLabel htmlFor={`${ids}-name`}>Nama barang</FieldLabel>
@@ -276,6 +310,7 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
             <FieldDescription>Nama belum ada. Cek daftar dulu supaya tidak dobel. Barang baru dicatat sebagai alat.</FieldDescription>
           )}
         </Field>
+        )}
 
         {isNew && isPlss && (
           <Segmented label="Jenis barang baru" value={newKind} onChange={(v) => setNewKind(v as ItemKind)} options={[
@@ -284,17 +319,17 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
           ]} />
         )}
 
-        {kind === "ALAT" ? (
+        {kind === "ALAT" ? (locked ? null :
           <Segmented label="Aksi" value={effAction} onChange={(v) => setAction(v as Action)} options={[
             { value: "TARUH", title: "Taruh", sub: "disimpan di rak" },
             { value: "AMBIL", title: "Ambil", sub: "saya bawa" },
           ]} />
         ) : (
           <>
-            <Segmented label="Aksi stok" value={effAction} onChange={(v) => setAction(v as Action)} options={[
+            {!locked && <Segmented label="Aksi stok" value={effAction} onChange={(v) => setAction(v as Action)} options={[
               { value: "PAKAI", title: "Pakai", sub: "ambil dari stok", disabled: isNew },
               { value: "MASUK", title: "Tambah", sub: "khusus PLSS", disabled: !isPlss },
-            ]} />
+            ]} />}
             <Field>
               <FieldLabel htmlFor={`${ids}-qty`}>Jumlah</FieldLabel>
               <div className="flex items-center gap-3">
@@ -332,7 +367,7 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
               <FieldLabel htmlFor={`${ids}-loc`}><MapPin aria-hidden className="size-4" /> Lokasi</FieldLabel>
               <NativeSelect id={`${ids}-loc`} value={locationId ?? ""} onChange={(e) => setLocationId(Number(e.target.value))} required>
                 {locations.length === 0 && <NativeSelectOption value="">Belum ada lokasi. Minta PLSS menambahkan.</NativeSelectOption>}
-                {locations.map((l) => <NativeSelectOption key={l.id} value={l.id}>{l.code} ({l.name})</NativeSelectOption>)}
+                {locations.map((l) => <NativeSelectOption key={l.id} value={l.id}>{rackLabel(l.code, l.name)}</NativeSelectOption>)}
               </NativeSelect>
             </Field>
           )}
@@ -358,14 +393,78 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
 
         {/* Mobile: tombol menempel di atas tab bar. Tablet/desktop: baris aksi biasa */}
         <div className="sticky bottom-[calc(var(--tabbar-h)+0.75rem+env(safe-area-inset-bottom))] z-10 md:static md:flex md:justify-end md:gap-3">
-          <Button type="button" onClick={reset} variant="outline" className="hidden md:inline-flex md:w-40">Batal</Button>
+          <Button type="button" onClick={cancel} variant="outline" className="hidden md:inline-flex md:w-40">Batal</Button>
           <Button type="submit" disabled={busy} className="w-full md:w-[220px]">
             {busy && <Spinner data-icon="inline-start" />}
-            {busy ? "Mengirim..." : "Kirim laporan"}
+            {busy ? "Mengirim..." : `Kirim: ${labelOf(effAction)}`}
           </Button>
         </div>
       </FieldGroup>
     </form>
+  );
+}
+
+type Done = { text: string; at: number; reportId?: number; moveId?: number; undone?: boolean };
+const DONE_KEY = "bengkel-done";
+const UNDO_MS = 30_000;
+function keepDone(d: Done) { try { sessionStorage.setItem(DONE_KEY, JSON.stringify(d)); } catch { /* abaikan */ } }
+function takeDone(): Done | null {
+  try {
+    // Tidak langsung dihapus: halaman bisa dimuat ulang sekali setelah kirim. Kedaluwarsa bersama jendela batal.
+    const raw = sessionStorage.getItem(DONE_KEY);
+    const d = raw ? (JSON.parse(raw) as Done) : null;
+    return d && Date.now() - d.at < UNDO_MS ? d : null;
+  } catch { return null; }
+}
+
+// Penutup alur: konfirmasi jelas + kesempatan membatalkan 30 detik (dicatat di tabel voids, riwayat tidak dihapus)
+function DoneNotice({ done, onClear }: { done: Done; onClear: () => void }) {
+  const router = useRouter();
+  const ref = useRef<HTMLDivElement>(null);
+  const [left, setLeft] = useState(() => Math.max(0, Math.ceil((done.at + UNDO_MS - Date.now()) / 1000)));
+  const [state, setState] = useState<"idle" | "busy" | "undone" | "error">(done.undone ? "undone" : "idle");
+  const [msg, setMsg] = useState<string | null>(null);
+  const canUndo = (done.reportId || done.moveId) && left > 0 && state !== "undone";
+
+  useEffect(() => { ref.current?.focus({ preventScroll: true }); }, []);
+  useEffect(() => {
+    if (left <= 0) return;
+    const t = setTimeout(() => setLeft((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [left]);
+
+  async function undo() {
+    setState("busy");
+    const { error } = await createClient().rpc("void_entry",
+      done.reportId ? { p_report_id: done.reportId } : { p_move_id: done.moveId });
+    if (error) { setState("error"); setMsg(errMessage(error)); return; }
+    setState("undone");
+    try { sessionStorage.removeItem(DONE_KEY); } catch { /* abaikan */ }
+    router.refresh();
+  }
+
+  return (
+    <div ref={ref} tabIndex={-1} className="outline-none">
+      <Alert variant={state === "undone" ? "default" : "success"} role="status">
+        {state === "undone" ? <Undo2 aria-hidden /> : <CircleCheck aria-hidden className="text-primary" />}
+        <AlertDescription>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <p className="min-w-[14rem] flex-1 text-foreground">
+              {state === "undone" ? <>Dibatalkan. <span className="line-through opacity-70">{done.text}</span></> : <>Tersimpan. {done.text}</>}
+            </p>
+            {canUndo && (
+              <Button type="button" variant="outline" size="sm" onClick={undo} disabled={state === "busy"} aria-busy={state === "busy"}>
+                {state === "busy" ? <><Spinner data-icon="inline-start" />Membatalkan...</> : <>Batalkan ({left})</>}
+              </Button>
+            )}
+            {!canUndo && state !== "busy" && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => { try { sessionStorage.removeItem(DONE_KEY); } catch { /* abaikan */ } onClear(); }}>Tutup</Button>
+            )}
+          </div>
+          {msg && <p className="text-destructive">{msg}</p>}
+        </AlertDescription>
+      </Alert>
+    </div>
   );
 }
 

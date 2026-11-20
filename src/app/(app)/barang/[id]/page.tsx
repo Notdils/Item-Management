@@ -1,9 +1,10 @@
+import { LinkPending } from "@/components/Pending";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft, Hand, MapPin, PackageOpen } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signPhotos } from "@/lib/photos";
-import { fmtAgo, fmtShort } from "@/lib/format";
+import { fmtAgo, fmtShort, rackExtra } from "@/lib/format";
 import { Thumb } from "@/components/ItemRow";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,12 +15,12 @@ import { cn } from "@/lib/utils";
 import type { ItemOverview, StockLevel } from "@/lib/types";
 
 type Report = { id: number; kind: "TARUH" | "AMBIL"; created_at: string; photo_path: string | null; note: string | null;
-  profiles: { full_name: string } | null; locations: { code: string; name: string } | null };
+  profiles: { full_name: string } | null; locations: { code: string; name: string } | null; voids: { id: number } | null };
 type Move = { id: number; kind: "MASUK" | "PAKAI" | "OPNAME"; qty_delta: number; created_at: string; note: string | null;
-  profiles: { full_name: string } | null; locations: { code: string } | null };
+  profiles: { full_name: string } | null; locations: { code: string } | null; voids: { id: number } | null };
 type Entry = {
   id: number; when: string; action: string; where: string; who: string; note: string | null;
-  tone: "ok" | "warn"; photo?: string | null;
+  tone: "ok" | "warn" | "muted"; photo?: string | null;
 };
 
 export default async function BarangPage({ params }: { params: Promise<{ id: string }> }) {
@@ -34,7 +35,7 @@ export default async function BarangPage({ params }: { params: Promise<{ id: str
   if (item.kind === "HABIS_PAKAI") {
     const [levels, moves] = await Promise.all([
       supabase.from("stock_levels").select("*").eq("item_id", id).order("location_code"),
-      supabase.from("stock_moves").select("id, kind, qty_delta, created_at, note, profiles(full_name), locations(code)")
+      supabase.from("stock_moves").select("id, kind, qty_delta, created_at, note, profiles(full_name), locations(code), voids(id)")
         .eq("item_id", id).order("created_at", { ascending: false }).limit(30),
     ]);
     const lv = (levels.data ?? []) as StockLevel[];
@@ -46,32 +47,33 @@ export default async function BarangPage({ params }: { params: Promise<{ id: str
           <Card className="gap-0 p-0">
             {lv.map((l) => (
               <div key={l.location_id} className="flex items-center justify-between border-b px-4 py-3.5 last:border-b-0">
-                <span className="flex items-center gap-2"><span className="rack text-sm">{l.location_code}</span> <span className="text-sm text-muted-foreground">{l.location_name}</span></span>
+                <span className="flex items-center gap-2"><span className="rack text-sm">{l.location_code}</span> <span className="text-sm text-muted-foreground">{rackExtra(l.location_code, l.location_name)}</span></span>
                 <span className="font-mono text-xl font-medium">{l.qty}</span>
               </div>
             ))}
           </Card>
         ) : <EmptyHistory text="Belum ada stok tercatat." />}
-        <Button asChild className="md:w-fit md:min-w-56"><Link href={`/?item=${enc}&aksi=PAKAI`}>Pakai</Link></Button>
+        <Button asChild className="md:w-fit md:min-w-56"><Link href={`/lapor?item=${enc}&aksi=PAKAI`}><LinkPending />Pakai</Link></Button>
         <History title="Riwayat stok" entries={((moves.data ?? []) as unknown as Move[]).map((m) => ({
           id: m.id,
           when: fmtShort(m.created_at),
-          action: `${m.kind === "MASUK" ? "Masuk" : m.kind === "PAKAI" ? "Dipakai" : "Opname"} ${m.qty_delta > 0 ? "+" : ""}${m.qty_delta}`,
+          action: `${m.voids ? "Batal: " : ""}${m.kind === "MASUK" ? "Masuk" : m.kind === "PAKAI" ? "Dipakai" : "Opname"} ${m.qty_delta > 0 ? "+" : ""}${m.qty_delta}`,
           where: m.locations?.code ?? "-",
           who: m.profiles?.full_name ?? "-",
           note: m.note,
-          tone: m.kind === "PAKAI" ? "warn" : "ok",
+          tone: m.voids ? "muted" : m.kind === "PAKAI" ? "warn" : "ok",
         }))} />
       </>
     );
   }
 
   const { data: reports } = await supabase.from("reports")
-    .select("id, kind, created_at, photo_path, note, profiles(full_name), locations(code, name)")
+    .select("id, kind, created_at, photo_path, note, profiles(full_name), locations(code, name), voids(id)")
     .eq("item_id", id).order("created_at", { ascending: false }).limit(30);
   const rows = (reports ?? []) as unknown as Report[];
   const photos = await signPhotos(supabase, rows.map((r) => r.photo_path));
-  const last = rows[0];
+  // Laporan yang dibatalkan tetap tampil di riwayat, tapi tidak menentukan posisi
+  const last = rows.find((r) => !r.voids);
   const lastPhoto = rows.find((r) => r.photo_path);
   const placed = last?.kind === "TARUH";
 
@@ -93,7 +95,7 @@ export default async function BarangPage({ params }: { params: Promise<{ id: str
               <CardHeader className="gap-1.5">
                 <p className="text-sm text-muted-foreground">{placed ? "Sekarang ada di" : "Sedang dibawa"}</p>
                 <CardTitle className="flex flex-wrap items-center gap-2.5 text-xl">
-                  {placed ? <><MapPin aria-hidden className="size-5 text-primary" /><span className="rack text-xl">{last.locations?.code}</span> <span className="font-semibold">{last.locations?.name}</span></>
+                  {placed ? <><MapPin aria-hidden className="size-5 text-primary" /><span className="rack text-xl">{last.locations?.code}</span> <span className="font-semibold">{rackExtra(last.locations?.code, last.locations?.name)}</span></>
                     : <><Hand aria-hidden className="size-5 text-warn" /> {last.profiles?.full_name}</>}
                 </CardTitle>
                 <CardDescription className="text-sm">
@@ -106,9 +108,9 @@ export default async function BarangPage({ params }: { params: Promise<{ id: str
 
           <div className="grid grid-cols-2 gap-3">
             {last?.kind === "AMBIL"
-              ? <Button asChild><Link href={`/?item=${enc}&aksi=TARUH`}>Taruh</Link></Button>
-              : <Button asChild><Link href={`/?item=${enc}&aksi=AMBIL`}>Ambil barang</Link></Button>}
-            <Button asChild variant="outline"><Link href={`/?item=${enc}&aksi=TARUH`}>Pindah</Link></Button>
+              ? <Button asChild><Link href={`/lapor?item=${enc}&aksi=TARUH`}><LinkPending />Taruh</Link></Button>
+              : <Button asChild><Link href={`/lapor?item=${enc}&aksi=AMBIL`}><LinkPending />Ambil barang</Link></Button>}
+            <Button asChild variant="outline"><Link href={`/lapor?item=${enc}&aksi=TARUH`}><LinkPending />Pindah</Link></Button>
           </div>
         </div>
       </div>
@@ -116,11 +118,11 @@ export default async function BarangPage({ params }: { params: Promise<{ id: str
       <History title="Riwayat" entries={rows.map((r) => ({
         id: r.id,
         when: fmtShort(r.created_at),
-        action: r.kind === "TARUH" ? "Ditaruh" : "Diambil",
+        action: r.voids ? `Batal: ${r.kind === "TARUH" ? "taruh" : "ambil"}` : r.kind === "TARUH" ? "Ditaruh" : "Diambil",
         where: r.locations?.code ?? "-",
         who: r.profiles?.full_name ?? "-",
         note: r.note,
-        tone: r.kind === "TARUH" ? "ok" : "warn",
+        tone: r.voids ? "muted" : r.kind === "TARUH" ? "ok" : "warn",
         photo: r.photo_path ? photos.get(r.photo_path) : null,
       }))} />
     </>

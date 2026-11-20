@@ -3,6 +3,7 @@ import { Camera } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { LinkPending } from "@/components/Pending";
 
 export type Tone = "ok" | "warn" | "muted";
 
@@ -27,7 +28,7 @@ export function ItemRow({ href, name, place, meta, status, tone = "ok", photo }:
       <Thumb src={photo} />
       <div className="min-w-0 flex-1">
         {href ? (
-          <Link href={href} className="block truncate text-base font-semibold after:absolute after:inset-0">{name}</Link>
+          <Link href={href} className="flex items-center gap-2 truncate text-base font-semibold after:absolute after:inset-0"><span className="truncate">{name}</span><LinkPending /></Link>
         ) : (
           <p className="truncate text-base font-semibold">{name}</p>
         )}

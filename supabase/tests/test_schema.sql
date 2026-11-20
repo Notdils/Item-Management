@@ -142,5 +142,39 @@ select pg_temp.expect_error($$select * from public.items$$, '42501');
 select pg_temp.expect_error($$select public.report_item('x','AMBIL')$$, '42501');
 reset role;
 
+-- ===== batalkan laporan (undo): append-only lewat tabel voids
+insert into storage.objects (bucket_id, name) values ('photos', '00000000-0000-0000-0000-00000000000b/u1.jpg');
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000b', false);
+select public.report_item('Obeng undo', 'TARUH', 1, '00000000-0000-0000-0000-00000000000b/u1.jpg');
+select public.report_item('Obeng undo', 'AMBIL');
+-- laporan lama (bukan yang terbaru) tidak boleh dibatalkan
+select pg_temp.expect_error($$select public.void_entry(p_report_id => (select min(id) from public.reports where item_id = (select id from public.items where name_key='obeng undo')))$$, '22023');
+select public.void_entry(p_report_id => (select max(id) from public.reports where item_id = (select id from public.items where name_key='obeng undo')));
+do $$ begin
+  assert (select kind from public.item_positions where item_id = (select id from public.items where name_key='obeng undo')) = 'TARUH', 'setelah undo AMBIL, posisi kembali TARUH';
+  assert (select count(*) from public.reports where item_id = (select id from public.items where name_key='obeng undo')) = 2, 'riwayat tidak dihapus';
+  raise notice 'OK undo laporan alat: posisi kembali, riwayat tetap';
+end $$;
+select pg_temp.expect_error($$select public.void_entry(p_report_id => (select max(id) from public.reports where item_id = (select id from public.items where name_key='obeng undo')))$$, '23505');
+select pg_temp.expect_error($$delete from public.voids$$, '42501');
+-- laporan orang lain tidak bisa dibatalkan
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000a', false);
+select pg_temp.expect_error($$select public.void_entry(p_report_id => (select min(id) from public.reports where item_id = (select id from public.items where name_key='obeng undo')))$$, '42501');
+-- undo mutasi stok: MASUK lalu PAKAI; MASUK tidak bisa dibatalkan kalau stok jadi minus
+select public.move_stock('Baut undo', 'MASUK', 1, 10, 'pcs');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000b', false);
+select public.move_stock('Baut undo', 'PAKAI', 1, 4);
+select public.void_entry(p_move_id => (select max(id) from public.stock_moves));
+do $$ begin
+  assert (select qty from public.stock_levels where item_id = (select id from public.items where name_key='baut undo')) = 10, 'undo PAKAI mengembalikan stok';
+  raise notice 'OK undo pakai: stok kembali 10';
+end $$;
+select public.move_stock('Baut undo', 'PAKAI', 1, 8);
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000a', false);
+select pg_temp.expect_error($$select public.void_entry(p_move_id => (select min(id) from public.stock_moves where item_id = (select id from public.items where name_key='baut undo')))$$, '23514');
+reset role;
+do $$ begin raise notice 'OK undo: hanya pelapor, hanya terbaru, tidak bikin minus, tidak bisa dihapus'; end $$;
+
 -- ===== konkurensi: kunci item menyerialkan pemakaian stok (dicek terpisah di run_tests.sh)
 \echo 'SEMUA TES LULUS'

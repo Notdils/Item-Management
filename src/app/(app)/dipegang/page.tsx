@@ -1,3 +1,4 @@
+import { LinkPending } from "@/components/Pending";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Hand } from "lucide-react";
@@ -18,8 +19,10 @@ import type { HeldItem } from "@/lib/types";
 export const metadata: Metadata = { title: "Sedang dipegang" };
 
 export default async function DipegangPage({ searchParams }: { searchParams: Promise<{ semua?: string }> }) {
-  const all = (await searchParams).semua === "1";
+  const semua = (await searchParams).semua;
   const profile = await requireProfile();
+  // PLSS mengawasi semua anggota: tab "Semua" jadi bawaan
+  const all = semua ? semua === "1" : profile.division === "PLSS";
   const supabase = await createClient();
   const { data } = await supabase.from("held_items")
     .select("item_id, name, user_id, user_name, photo_path, reported_at, overdue")
@@ -29,7 +32,7 @@ export default async function DipegangPage({ searchParams }: { searchParams: Pro
   const rows = all ? held : mine;
   const myOverdue = mine.filter((h) => h.overdue);
   const photos = await signPhotos(supabase, rows.map((r) => r.photo_path));
-  const taruh = (h: HeldItem) => `/?item=${encodeURIComponent(h.name)}&aksi=TARUH`;
+  const taruh = (h: HeldItem) => `/lapor?item=${encodeURIComponent(h.name)}&aksi=TARUH`;
 
   return (
     <>
@@ -37,7 +40,7 @@ export default async function DipegangPage({ searchParams }: { searchParams: Pro
       {/* Tab = tautan, supaya pilihan tersimpan di URL */}
       <Tabs value={all ? "semua" : "saya"}>
         <TabsList>
-          <TabsTrigger value="saya" asChild><Link href="/dipegang">Saya ({mine.length})</Link></TabsTrigger>
+          <TabsTrigger value="saya" asChild><Link href="/dipegang?semua=0">Saya ({mine.length})</Link></TabsTrigger>
           <TabsTrigger value="semua" asChild><Link href="/dipegang?semua=1">Semua ({held.length})</Link></TabsTrigger>
         </TabsList>
       </Tabs>
@@ -70,7 +73,7 @@ export default async function DipegangPage({ searchParams }: { searchParams: Pro
                   status={h.overdue ? `> ${HELD_LIMIT_HOURS} jam` : "Dipegang"} tone={h.overdue ? "warn" : "muted"} />
                 {h.user_id === profile.id && (
                   <div className="px-3 pb-3">
-                    <Button asChild size="sm" className="w-full"><Link href={taruh(h)}>Taruh sekarang</Link></Button>
+                    <Button asChild size="sm" className="w-full"><Link href={taruh(h)}><LinkPending />Taruh sekarang</Link></Button>
                   </div>
                 )}
               </Card>
@@ -91,7 +94,7 @@ export default async function DipegangPage({ searchParams }: { searchParams: Pro
                     <TableCell className="font-mono text-xs">{fmtShort(h.reported_at)}</TableCell>
                     <TableCell><Badge variant={h.overdue ? "warn" : "muted"}>{h.overdue ? `> ${HELD_LIMIT_HOURS} jam` : fmtDuration(h.reported_at)}</Badge></TableCell>
                     <TableCell className="text-right">
-                      {h.user_id === profile.id && <Button asChild size="sm"><Link href={taruh(h)}>Taruh sekarang</Link></Button>}
+                      {h.user_id === profile.id && <Button asChild size="sm"><Link href={taruh(h)}><LinkPending />Taruh sekarang</Link></Button>}
                     </TableCell>
                   </TableRow>
                 ))}

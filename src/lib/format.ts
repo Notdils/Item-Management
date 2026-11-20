@@ -43,3 +43,13 @@ export function errMessage(e: unknown) {
   }
   return "Terjadi kesalahan. Coba lagi.";
 }
+
+// Nama rak hanya ditampilkan kalau menambah informasi: "RAK-A" + "Rak A" cukup "RAK-A"
+export function rackExtra(code: string | null | undefined, name: string | null | undefined): string | null {
+  if (!name) return null;
+  return name.trim().toUpperCase().replace(/\s+/g, "-") === code ? null : name;
+}
+export const rackLabel = (code: string, name?: string | null) => {
+  const extra = rackExtra(code, name);
+  return extra ? `${code} (${extra})` : code;
+};

@@ -4,7 +4,7 @@ import { ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/session";
 import { signOut } from "@/app/login/actions";
-import { Button } from "@/components/ui/button";
+import { DownloadLink, LinkPending, SubmitButton } from "@/components/Pending";
 import { Card } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -61,8 +61,8 @@ export default async function AkunPage({ searchParams }: { searchParams: Promise
                 <li key={m.href}>
                   <Card className="p-0 hover:bg-accent">
                     {m.download
-                      ? <a href={m.href} download className="flex items-center gap-3 px-4 py-4">{body}</a>
-                      : <Link href={m.href} className="flex items-center gap-3 px-4 py-4">{body}</Link>}
+                      ? <DownloadLink href={m.href} className="flex items-center gap-3 px-4 py-4">{body}</DownloadLink>
+                      : <Link href={m.href} className="flex items-center gap-3 px-4 py-4">{body}<LinkPending /></Link>}
                   </Card>
                 </li>
               );
@@ -77,12 +77,12 @@ export default async function AkunPage({ searchParams }: { searchParams: Promise
             <FieldLabel htmlFor="name">Nama tampilan</FieldLabel>
             <Input id="name" name="name" defaultValue={profile.full_name} autoComplete="name" required minLength={2} maxLength={80} />
           </Field>
-          <Button variant="outline">Simpan nama</Button>
+          <SubmitButton variant="outline" pendingText="Menyimpan...">Simpan nama</SubmitButton>
         </FieldGroup>
       </form>
 
       <form action={signOut}>
-        <Button variant="outline" className="w-full lg:w-[200px]">Keluar</Button>
+        <SubmitButton variant="outline" className="w-full lg:w-[200px]" pendingText="Keluar...">Keluar</SubmitButton>
       </form>
     </>
   );
