@@ -19,11 +19,11 @@ export function Thumb({ src, size = 56 }: { src?: string | null; size?: number }
   );
 }
 
-export function ItemRow({ href, name, meta, status, tone = "ok", photo }: {
-  href?: string; name: string; meta: string; status: string; tone?: Tone; photo?: string | null;
+export function ItemRow({ href, name, place, meta, status, tone = "ok", photo }: {
+  href?: string; name: string; place?: string | null; meta: string; status: string; tone?: Tone; photo?: string | null;
 }) {
   return (
-    <Card className={cn("relative flex-row items-center gap-3 p-3", href && "hover:bg-accent")}>
+    <Card className={cn("relative flex-row items-center gap-3 p-3", href && "hover:bg-white")}>
       <Thumb src={photo} />
       <div className="min-w-0 flex-1">
         {href ? (
@@ -31,7 +31,10 @@ export function ItemRow({ href, name, meta, status, tone = "ok", photo }: {
         ) : (
           <p className="truncate text-base font-semibold">{name}</p>
         )}
-        <p className="mt-1 font-mono text-xs text-muted-foreground">{meta}</p>
+        <p className="mt-1 flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+          {place && <span className="tape text-xs">{place}</span>}
+          <span className="truncate">{meta}</span>
+        </p>
       </div>
       <Badge variant={tone}>{status}</Badge>
     </Card>

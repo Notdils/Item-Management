@@ -14,7 +14,7 @@ import { archiveItem, mergeItems, renameItem } from "../actions";
 export const metadata: Metadata = { title: "Daftar barang" };
 
 type Row = { id: number; name: string; kind: "ALAT" | "HABIS_PAKAI"; unit: string | null };
-const kindLabel = (r: Row) => (r.kind === "ALAT" ? "Alat" : `Habis pakai · ${r.unit}`);
+const kindLabel = (r: Row) => (r.kind === "ALAT" ? "Alat" : `Habis pakai (${r.unit})`);
 
 function RenameForm({ r, id }: { r: Row; id: string }) {
   return (

@@ -32,19 +32,20 @@ export default async function LaporPage({ searchParams }: { searchParams: Promis
     : undefined;
 
   const header = (
-    <header className="flex flex-col gap-2">
-      <p className="eyebrow text-primary">Halo, {profile.full_name} · {profile.division}</p>
-      <h1 className="title">Taruh atau ambil barang</h1>
+    <header className="flex flex-col gap-3">
+      <h1 className="title">Lapor barang</h1>
+      <p className="max-w-[52ch] text-base text-muted-foreground">Taruh atau ambil barang? Foto, isi nama, kirim. Biar PLSS tahu posisinya.</p>
     </header>
   );
   const aside = recentRows.length > 0 ? (
-    <section aria-labelledby="recent" className="flex flex-col gap-2">
-      <h2 id="recent" className="eyebrow text-muted-foreground">Laporan terakhir kamu</h2>
+    <section aria-labelledby="recent" className="flex flex-col gap-3">
+      <h2 id="recent" className="text-lg font-bold">Laporan terakhir kamu</h2>
       <div className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3 lg:flex lg:flex-col lg:gap-2">
         {recentRows.map((r) => (
           <ItemRow key={r.id} href={r.items ? `/barang/${r.items.id}` : undefined}
             name={r.items?.name ?? "-"}
-            meta={`${r.kind === "TARUH" ? r.locations?.code ?? "-" : "Kamu bawa"} · ${fmtAgo(r.created_at)}`}
+            place={r.kind === "TARUH" ? r.locations?.code : null}
+            meta={r.kind === "TARUH" ? fmtAgo(r.created_at) : `Kamu bawa, ${fmtAgo(r.created_at)}`}
             status={r.kind === "TARUH" ? "Ditaruh" : "Diambil"} tone={r.kind === "TARUH" ? "ok" : "warn"}
             photo={r.photo_path ? photos.get(r.photo_path) : null} />
         ))}

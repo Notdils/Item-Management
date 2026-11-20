@@ -39,7 +39,7 @@ export default async function AkunPage({ searchParams }: { searchParams: Promise
   return (
     <>
       <header className="flex flex-col gap-1.5">
-        <p className="eyebrow text-primary">{plss ? "PLSS · Admin data" : "Teknikal"}</p>
+        <p className="eyebrow text-muted-foreground">{plss ? "PLSS, admin data" : "Teknikal"}</p>
         <h1 className="title">{profile.full_name}</h1>
       </header>
       <Flash {...sp} />

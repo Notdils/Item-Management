@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Hand, MapPin, PackageOpen } from "lucide-react";
+import { ChevronLeft, Hand, PackageOpen } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signPhotos } from "@/lib/photos";
 import { fmtAgo, fmtShort } from "@/lib/format";
@@ -41,12 +41,12 @@ export default async function BarangPage({ params }: { params: Promise<{ id: str
     return (
       <>
         <BackLink />
-        <Head label={`Habis pakai · ${item.unit ?? "pcs"}`} name={item.name} />
+        <Head label={`Habis pakai, dalam ${item.unit ?? "pcs"}`} name={item.name} />
         {lv.length > 0 ? (
           <Card className="gap-0 p-0">
             {lv.map((l) => (
               <div key={l.location_id} className="flex items-center justify-between border-b px-4 py-3.5 last:border-b-0">
-                <span><span className="font-semibold">{l.location_code}</span> <span className="text-sm text-muted-foreground">{l.location_name}</span></span>
+                <span className="flex items-center gap-2"><span className="tape text-sm">{l.location_code}</span> <span className="text-sm text-muted-foreground">{l.location_name}</span></span>
                 <span className="font-mono text-xl font-medium">{l.qty}</span>
               </div>
             ))}
@@ -83,21 +83,22 @@ export default async function BarangPage({ params }: { params: Promise<{ id: str
           {lastPhoto?.photo_path && photos.get(lastPhoto.photo_path) ? (
             // eslint-disable-next-line @next/next/no-img-element -- signed URL
             <img src={photos.get(lastPhoto.photo_path)} alt={`Foto terakhir ${item.name}`} className="absolute inset-0 size-full object-cover" />
-          ) : <span className="font-mono text-xs">belum ada foto</span>}
+          ) : <span className="text-sm">Belum ada foto</span>}
         </div>
         <div className="flex flex-col gap-5">
-          <Head label={`Alat · #${item.id}`} name={item.name} />
+          <Head label={`Alat nomor ${item.id}`} name={item.name} />
 
           {last ? (
-            <Card className={cn("border", placed ? "border-primary" : "border-warn")}>
+            <Card className={cn("border-l-4", placed ? "border-l-ok" : "border-l-warn")}>
               <CardHeader className="gap-1.5">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  {placed ? <MapPin aria-hidden className="size-5 text-primary" /> : <Hand aria-hidden className="size-5 text-warn" />}
-                  {placed ? `${last.locations?.code} · ${last.locations?.name}` : `Dipegang ${last.profiles?.full_name}`}
+                <p className="text-sm text-muted-foreground">{placed ? "Sekarang ada di" : "Sedang dibawa"}</p>
+                <CardTitle className="flex flex-wrap items-center gap-2.5 text-xl">
+                  {placed ? <><span className="tape text-2xl">{last.locations?.code}</span> <span className="font-semibold">{last.locations?.name}</span></>
+                    : <><Hand aria-hidden className="size-5 text-warn" /> {last.profiles?.full_name}</>}
                 </CardTitle>
-                <CardDescription className="font-mono text-xs">
-                  {placed ? "Ditaruh" : "Diambil"} oleh {last.profiles?.full_name} · {fmtAgo(last.created_at)}
-                  {last.note ? ` · ${last.note}` : ""}
+                <CardDescription className="text-sm">
+                  {placed ? "Ditaruh" : "Diambil"} oleh {last.profiles?.full_name}, {fmtAgo(last.created_at)}.
+                  {last.note ? ` Catatan: ${last.note}` : ""}
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -137,7 +138,7 @@ function BackLink() {
 function Head({ label, name }: { label: string; name: string }) {
   return (
     <header className="flex flex-col gap-1.5">
-      <p className="eyebrow text-primary">{label}</p>
+      <p className="eyebrow text-muted-foreground">{label}</p>
       <h1 className="title">{name}</h1>
     </header>
   );
@@ -160,7 +161,7 @@ function History({ title, entries }: { title: string; entries: Entry[] }) {
   const withPhoto = entries.some((e) => e.photo !== undefined);
   return (
     <section aria-label={title} className="flex flex-col gap-2">
-      <h2 className="eyebrow text-muted-foreground">{title}</h2>
+      <h2 className="text-lg font-bold">{title}</h2>
       {/* Mobile: daftar · Tablet/desktop: tabel */}
       <ol className="md:hidden">
         {entries.map((e) => (
@@ -168,7 +169,7 @@ function History({ title, entries }: { title: string; entries: Entry[] }) {
             <Badge variant={e.tone} className="w-20 shrink-0">{e.action}</Badge>
             <div className="min-w-0 flex-1">
               <p className="font-medium">{e.where}</p>
-              <p className="font-mono text-xs text-muted-foreground">{e.who} · {e.when}{e.note ? ` · ${e.note}` : ""}</p>
+              <p className="text-sm text-muted-foreground">{e.who}, {e.when}{e.note ? `. ${e.note}` : ""}</p>
             </div>
             {e.photo !== undefined && <Thumb src={e.photo} size={40} />}
           </li>
@@ -184,7 +185,7 @@ function History({ title, entries }: { title: string; entries: Entry[] }) {
               <TableRow key={e.id}>
                 <TableCell className="font-mono text-xs">{e.when}</TableCell>
                 <TableCell><Badge variant={e.tone}>{e.action}</Badge></TableCell>
-                <TableCell>{e.where}{e.note ? <span className="text-muted-foreground"> · {e.note}</span> : null}</TableCell>
+                <TableCell>{e.where}{e.note ? <span className="text-muted-foreground"> ({e.note})</span> : null}</TableCell>
                 <TableCell>{e.who}</TableCell>
                 {withPhoto && <TableCell className="hidden lg:table-cell"><Thumb src={e.photo} size={40} /></TableCell>}
               </TableRow>

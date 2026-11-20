@@ -1,4 +1,6 @@
 -- Tiruan minimal skema Supabase (auth, storage, role) untuk menguji migrasi di Postgres biasa.
+-- Sengaja TANPA "alter default privileges": project Supabase baru tidak memberi izin otomatis,
+-- jadi migrasi harus memberi izin sendiri (lihat 20261121000000_explicit_grants.sql).
 do $$ begin create role anon nologin; exception when duplicate_object then null; end $$;
 do $$ begin create role authenticated nologin; exception when duplicate_object then null; end $$;
 do $$ begin create role service_role nologin bypassrls; exception when duplicate_object then null; end $$;
@@ -27,6 +29,3 @@ grant usage on schema public, auth, storage to anon, authenticated, service_role
 grant execute on function auth.uid() to anon, authenticated;
 grant select, insert on storage.objects to authenticated;
 -- default privileges seperti Supabase
-alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
-alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
-alter default privileges in schema public grant execute on functions to anon, authenticated, service_role;

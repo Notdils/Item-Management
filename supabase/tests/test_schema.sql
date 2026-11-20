@@ -49,6 +49,12 @@ select pg_temp.expect_error($$insert into public.reports (item_id, kind, user_id
 select pg_temp.expect_error($$insert into public.locations (code, name) values ('RAK-Z9','x')$$, '42501');
 select pg_temp.expect_error($$select public._lock_item('x','ALAT',true)$$, '42501');
 select pg_temp.expect_error($$update public.profiles set division='PLSS' where id=auth.uid()$$, '42501');
+-- izin eksplisit: baca profil dan ganti nama sendiri harus jalan (project Supabase baru tanpa izin default)
+update public.profiles set full_name = 'Budi T.' where id = auth.uid();
+do $$ begin
+  assert (select full_name from public.profiles where id = auth.uid()) = 'Budi T.', 'ganti nama sendiri harus bisa';
+  raise notice 'OK izin eksplisit: baca profil + ganti nama sendiri';
+end $$;
 
 -- lapor TARUH tanpa lokasi/foto ditolak constraint
 select pg_temp.expect_error($$select public.report_item('Kunci ring 10', 'TARUH')$$, '23514');

@@ -37,8 +37,8 @@ export default async function DipegangPage({ searchParams }: { searchParams: Pro
       {/* Tab = tautan, supaya pilihan tersimpan di URL */}
       <Tabs value={all ? "semua" : "saya"}>
         <TabsList>
-          <TabsTrigger value="saya" asChild><Link href="/dipegang">Saya · {mine.length}</Link></TabsTrigger>
-          <TabsTrigger value="semua" asChild><Link href="/dipegang?semua=1">Semua · {held.length}</Link></TabsTrigger>
+          <TabsTrigger value="saya" asChild><Link href="/dipegang">Saya ({mine.length})</Link></TabsTrigger>
+          <TabsTrigger value="semua" asChild><Link href="/dipegang?semua=1">Semua ({held.length})</Link></TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -66,7 +66,7 @@ export default async function DipegangPage({ searchParams }: { searchParams: Pro
             {rows.map((h) => (
               <Card key={h.item_id} className="gap-0 p-0">
                 <ItemRow href={`/barang/${h.item_id}`} name={h.name} photo={h.photo_path ? photos.get(h.photo_path) : null}
-                  meta={`${all ? `${h.user_name} · ` : ""}Diambil ${fmtShort(h.reported_at)} · ${fmtDuration(h.reported_at)}`}
+                  meta={all ? `${h.user_name}, ${fmtDuration(h.reported_at)}` : `Kamu bawa ${fmtDuration(h.reported_at)}`}
                   status={h.overdue ? `> ${HELD_LIMIT_HOURS} jam` : "Dipegang"} tone={h.overdue ? "warn" : "muted"} />
                 {h.user_id === profile.id && (
                   <div className="px-3 pb-3">

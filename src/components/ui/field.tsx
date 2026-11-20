@@ -115,8 +115,8 @@ function FieldLabel({
     <Label
       data-slot="field-label"
       className={cn(
-        // Figma: label form mono, huruf besar, abu
-        "group/field-label peer/field-label flex w-fit gap-2 font-mono text-xs leading-snug font-medium uppercase text-muted-foreground group-data-[disabled=true]/field:opacity-50",
+        // Label form: tebal, kalimat biasa
+        "group/field-label peer/field-label flex w-fit gap-2 text-sm leading-snug font-semibold text-foreground group-data-[disabled=true]/field:opacity-50",
         "has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col has-[>[data-slot=field]]:rounded-md has-[>[data-slot=field]]:border [&>*]:data-[slot=field]:p-4",
         "has-data-[state=checked]:border-primary has-data-[state=checked]:bg-primary/5 dark:has-data-[state=checked]:bg-primary/10",
         className

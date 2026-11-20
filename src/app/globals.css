@@ -3,27 +3,31 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Variabel tema shadcn/ui, dipetakan ke token Figma "Bengkel" (aplikasi selalu gelap) */
+/* Tema "Bengkel" v2: lantai beton, lembar kerja, tinta, pita label rak.
+   Terang karena dipakai di bengkel siang hari; kuning hanya untuk kode rak (pita label maker). */
 :root {
-  --radius: 0.625rem;
-  --background: #0c1211;
-  --foreground: #ece5d8;
-  --card: #121a18;
-  --card-foreground: #ece5d8;
-  --popover: #121a18;
-  --popover-foreground: #ece5d8;
-  --primary: #29d970;
-  --primary-foreground: #06130c;
-  --secondary: #1b2522;
-  --secondary-foreground: #ece5d8;
-  --muted: #1b2522;
-  --muted-foreground: rgb(236 229 216 / 0.68);
-  --accent: #1b2522;
-  --accent-foreground: #ece5d8;
-  --destructive: #ff6b5e;
-  --border: rgb(236 229 216 / 0.14);
-  --input: rgb(236 229 216 / 0.14);
-  --ring: #29d970;
+  --radius: 0.5rem;
+  --background: #e3e4df;        /* beton */
+  --foreground: #1c1f1e;        /* tinta */
+  --card: #f6f6f2;              /* lembar kerja */
+  --card-foreground: #1c1f1e;
+  --popover: #f6f6f2;
+  --popover-foreground: #1c1f1e;
+  --primary: #1c1f1e;           /* aksi utama = tinta */
+  --primary-foreground: #f6f6f2;
+  --secondary: #d5d7d1;
+  --secondary-foreground: #1c1f1e;
+  --muted: #d5d7d1;
+  --muted-foreground: #565c59;  /* baja, kontras 5.6:1 di beton */
+  --accent: #d5d7d1;
+  --accent-foreground: #1c1f1e;
+  --destructive: #b8321a;
+  --border: rgb(28 31 30 / 0.16);
+  --input: rgb(28 31 30 / 0.28);
+  --ring: #1c1f1e;
+  --tape: #f5c400;              /* pita label rak */
+  --ok: #1d6b40;
+  --warn: #a8460c;
 }
 
 @theme inline {
@@ -53,13 +57,16 @@
 
 /* Token tambahan di luar tema shadcn: warna peringatan (Figma) dan font */
 @theme {
-  --color-warn: #f2b84b;
-  --font-sans: "Inter Variable", system-ui, sans-serif;
-  --font-mono: "Roboto Mono", ui-monospace, monospace;
+  --color-warn: var(--warn);
+  --color-ok: var(--ok);
+  --color-tape: var(--tape);
+  /* Satu keluarga: Archivo. Lebar sempit (wdth 72) untuk judul & kode rak, normal untuk teks. */
+  --font-sans: "Archivo Variable", system-ui, sans-serif;
+  --font-mono: "Archivo Variable", system-ui, sans-serif; /* "data": angka tabular, bukan monospace */
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
   --target-size: 24px;
   --tabbar-h: 4.25rem;
 }
@@ -99,26 +106,43 @@ img { max-inline-size: 100%; block-size: auto; }
 }
 
 input, select, textarea { font: inherit; }
+.font-mono { font-variant-numeric: tabular-nums; }
 input:user-invalid, select:user-invalid { border-color: var(--destructive); }
 }
 
 @layer components {
-  /* Tipografi Figma: label kecil mono dan judul halaman */
+  /* Label kecil: kalimat biasa, bukan huruf kapital berjarak */
   .eyebrow {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.3;
   }
+  /* Judul halaman: Archivo sempit & tebal */
   .title {
-    font-weight: 900;
-    font-size: 1.875rem;
-    line-height: 1.05;
-    letter-spacing: -0.02em;
+    font-weight: 800;
+    font-stretch: 72%;
+    font-size: 2.25rem;
+    line-height: 0.95;
+    letter-spacing: -0.01em;
   }
-  @media (min-width: 768px) { .title { font-size: 2.25rem; } }
-  @media (min-width: 1024px) { .title { font-size: 2.5rem; } }
+  @media (min-width: 768px) { .title { font-size: 3rem; } }
+  @media (min-width: 1024px) { .title { font-size: 3.5rem; } }
+
+  /* Kode rak dicetak seperti pita label maker */
+  .tape {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    background: var(--tape);
+    color: #1c1f1e;
+    font-weight: 800;
+    font-stretch: 72%;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    padding: 0.3em 0.55em 0.25em;
+    border-radius: 2px;
+    box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.12);
+  }
 }
 
 /* Input file disembunyikan; fokus keyboard ditampilkan di area kamera */

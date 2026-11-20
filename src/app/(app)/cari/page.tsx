@@ -59,7 +59,7 @@ export default async function CariPage({ searchParams }: { searchParams: Promise
         ) : (
           <>
             <div className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3 lg:hidden">
-              {rows.map((r) => { const s = summary(r); return <ItemRow key={r.id} href={`/barang/${r.id}`} name={r.name} photo={photo(r)} meta={s.meta} status={s.status} tone={s.tone} />; })}
+              {rows.map((r) => { const s = summary(r); return <ItemRow key={r.id} href={`/barang/${r.id}`} name={r.name} photo={photo(r)} place={s.place} meta={s.meta} status={s.status} tone={s.tone} />; })}
             </div>
             <div className="hidden lg:block">
               <Table>
@@ -73,7 +73,7 @@ export default async function CariPage({ searchParams }: { searchParams: Promise
                       <TableRow key={r.id} className="relative">
                         <TableCell><Thumb src={photo(r)} size={40} /></TableCell>
                         <TableCell><Link href={`/barang/${r.id}`} className="font-semibold after:absolute after:inset-0">{r.name}</Link></TableCell>
-                        <TableCell>{s.where}</TableCell>
+                        <TableCell>{s.place ? <span className="flex items-center gap-2"><span className="tape text-xs">{s.place}</span>{r.location_name}</span> : s.where}</TableCell>
                         <TableCell>{s.who}</TableCell>
                         <TableCell className="font-mono text-xs text-muted-foreground">{s.when}</TableCell>
                         <TableCell><Badge variant={s.tone}>{s.status}</Badge></TableCell>
@@ -91,17 +91,17 @@ export default async function CariPage({ searchParams }: { searchParams: Promise
 }
 
 // Ringkasan satu barang untuk daftar (mobile/tablet) dan tabel (desktop)
-function summary(r: ItemOverview): { meta: string; where: string; who: string; when: string; status: string; tone: Tone } {
+function summary(r: ItemOverview): { place?: string | null; meta: string; where: string; who: string; when: string; status: string; tone: Tone } {
   if (r.kind === "HABIS_PAKAI") {
     const qty = r.qty_total ?? 0;
-    return { meta: `${r.location_count ?? 0} lokasi · habis pakai`, where: `${r.location_count ?? 0} lokasi · habis pakai`, who: "-", when: "-", status: `${qty} ${r.unit ?? ""}`, tone: qty > 0 ? "ok" : "warn" };
+    return { meta: `Habis pakai, di ${r.location_count ?? 0} lokasi`, where: `Habis pakai, di ${r.location_count ?? 0} lokasi`, who: "-", when: "-", status: `${qty} ${r.unit ?? ""}`, tone: qty > 0 ? "ok" : "warn" };
   }
   if (!r.last_kind) return { meta: "Belum ada laporan", where: "Belum ada laporan", who: "-", when: "-", status: "-", tone: "muted" };
   if (r.last_kind === "AMBIL") {
     const late = Date.now() - new Date(r.reported_at!).getTime() > HELD_LIMIT_HOURS * 3_600_000;
     const dur = fmtDuration(r.reported_at!);
-    return { meta: `Dipegang ${r.user_name} · ${dur}`, where: "Dipegang", who: r.user_name ?? "-", when: dur, status: "Dipegang", tone: late ? "warn" : "muted" };
+    return { meta: `Dipegang ${r.user_name} selama ${dur}`, where: "Dipegang", who: r.user_name ?? "-", when: dur, status: "Dipegang", tone: late ? "warn" : "muted" };
   }
   const ago = fmtAgo(r.reported_at!);
-  return { meta: `${r.location_code} · oleh ${r.user_name} · ${ago}`, where: `${r.location_code} · ${r.location_name}`, who: r.user_name ?? "-", when: ago, status: "Di rak", tone: "ok" };
+  return { place: r.location_code, meta: `${r.user_name}, ${ago}`, where: `${r.location_code} (${r.location_name})`, who: r.user_name ?? "-", when: ago, status: "Di rak", tone: "ok" };
 }

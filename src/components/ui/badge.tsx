@@ -17,10 +17,10 @@ const badgeVariants = cva(
           "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         link: "text-primary underline-offset-4 [a&]:hover:underline",
-        // Figma: label status mono tanpa latar (DI RAK, DIPEGANG, > 12 JAM)
-        ok: "rounded-none px-0 py-0 font-mono text-[11px] uppercase text-primary",
-        warn: "rounded-none px-0 py-0 font-mono text-[11px] uppercase text-warn",
-        muted: "rounded-none px-0 py-0 font-mono text-[11px] uppercase text-muted-foreground",
+        // Status barang: kalimat biasa, warna sesuai keadaan; "warn" diberi latar supaya menonjol
+        ok: "rounded-none px-0 py-0 text-[13px] font-semibold text-ok",
+        warn: "rounded-sm bg-warn/12 px-2 py-0.5 text-[13px] font-semibold text-warn",
+        muted: "rounded-none px-0 py-0 text-[13px] font-medium text-muted-foreground",
       },
     },
     defaultVariants: {

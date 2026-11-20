@@ -74,7 +74,7 @@ PGHOST=<host> PGPORT=<port> bash supabase/tests/run_tests.sh
 ## Menjalankan
 
 ### 1. Supabase
-1. **SQL Editor**: jalankan isi `supabase/migrations/20261119000000_init.sql`.
+1. **SQL Editor**: jalankan isi kedua migrasi berurutan: `supabase/migrations/20261119000000_init.sql`, lalu `20261121000000_explicit_grants.sql`. Migrasi kedua wajib: sejak 30 Mei 2026 project Supabase baru tidak lagi memberi izin otomatis ke tabel `public` (changelog #45329, berlaku juga ke project lama mulai 30 Okt 2026). Tanpa itu login gagal dengan `permission denied for table profiles`.
 2. **Authentication → Sign In / Providers → Email**: matikan *Allow new users to sign up* (akun dibuat oleh PLSS).
 3. **Authentication → Users → Add user**: buat akun PLSS pertama (centang *Auto Confirm User*).
 4. **SQL Editor**: jalankan `supabase/bootstrap.sql` (ganti email PLSS di dalamnya kalau berbeda). Skrip ini juga membuatkan profil untuk akun yang dibuat sebelum migrasi.
@@ -97,6 +97,7 @@ Import repo, isi env `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHAB
 ```
 supabase/
   migrations/…_init.sql   skema, constraint, trigger, RPC, view, RLS, storage
+  migrations/…_explicit_grants.sql  GRANT eksplisit ke role authenticated (Data API)
   bootstrap.sql           jadikan akun pertama PLSS
   seed_admin.sql          buat / reset akun admin PLSS dari SQL Editor
   seed_demo.sql           data demo (opsional)

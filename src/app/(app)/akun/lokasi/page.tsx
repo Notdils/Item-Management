@@ -64,7 +64,7 @@ export default async function LokasiPage({ searchParams }: { searchParams: Promi
                 <li key={l.id} className={cn("flex items-center gap-3 border-b px-3.5 py-3 last:border-b-0", l.archived_at && "opacity-50")}>
                   <span className="min-w-0 flex-1">
                     <span className="block font-mono font-medium">{l.code}</span>
-                    <span className="text-sm text-muted-foreground">{l.name}{l.archived_at ? " · diarsip" : ""}</span>
+                    <span className="text-sm text-muted-foreground">{l.name}{l.archived_at ? " (diarsip)" : ""}</span>
                   </span>
                   <ToggleButton l={l} />
                 </li>

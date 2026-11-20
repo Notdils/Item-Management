@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { compressPhoto, photoExt } from "@/lib/image";
 import { errMessage, fmtDateTime } from "@/lib/format";
 import type { ItemKind, ItemOption, Location, StockLevel } from "@/lib/types";
-import { Camera, ChevronLeft, Clock, LocateFixed, MapPin, Minus, Plus, type LucideIcon } from "lucide-react";
+import { Camera, ChevronDown, ChevronLeft, Clock, LocateFixed, MapPin, Minus, Plus, type LucideIcon } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -183,39 +183,49 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
       <>
         {header}
         {fileInput}
-        <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8">
-          <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-10">
+          <div className="flex flex-col gap-4">
             {prefill && (
               <Alert>
                 <AlertDescription>
-                  <p>{labelOf(prefill.action)}: <span className="font-semibold text-primary">{prefill.item}</span></p>
+                  <p>{labelOf(prefill.action)}: <span className="font-semibold">{prefill.item}</span></p>
                 </AlertDescription>
               </Alert>
             )}
-            <label htmlFor={`${ids}-photo`}
-              className="photo-cta flex cursor-pointer flex-col items-center gap-3 rounded-2xl border-[1.5px] border-dashed border-primary bg-card px-4 py-11 text-center md:py-16 lg:py-24">
-              <span className="grid size-18 place-items-center rounded-full bg-primary text-primary-foreground">
-                <Camera aria-hidden className="size-8" />
-              </span>
-              <span className="text-lg font-bold">
-                <span className="lg:hidden">Ketuk untuk foto barang</span>
-                <span className="hidden lg:inline">Ambil atau pilih foto barang</span>
-              </span>
-              <span className="font-mono text-[13px] text-muted-foreground">
-                <span className="lg:hidden">Waktu dan lokasi terisi otomatis</span>
-                <span className="hidden lg:inline">Di laptop: pilih file atau pakai webcam</span>
-              </span>
-            </label>
-            <div className="flex items-center gap-2">
-              <span className="flex-1 text-sm text-muted-foreground">Lokasi aktif</span>
-              <Badge variant="outline"><MapPin className="text-primary" />{location?.code ?? "-"}</Badge>
-              <Button type="button" variant="link" size="sm" onClick={openForm}>Tanpa foto</Button>
-            </div>
             {done && (
               <Alert variant="success" role="status">
                 <AlertDescription><p className="text-foreground">Tersimpan. {done}</p></AlertDescription>
               </Alert>
             )}
+            {/* Satu aksi utama: panel tinta paling kontras di layar */}
+            <label htmlFor={`${ids}-photo`}
+              className="photo-cta group flex min-h-56 cursor-pointer flex-col justify-between gap-10 rounded-xl bg-primary p-6 text-primary-foreground transition-colors hover:bg-[#2a2e2c] md:min-h-72 md:p-8 lg:min-h-80">
+              <Camera aria-hidden className="size-10 md:size-12" strokeWidth={1.75} />
+              <span className="flex flex-col gap-2">
+                <span className="text-[34px] font-extrabold leading-none [font-stretch:72%] md:text-5xl">Foto barang</span>
+                <span className="text-[15px] text-primary-foreground/70">
+                  <span className="lg:hidden">Kamera langsung terbuka. Waktu dan rak terisi sendiri.</span>
+                  <span className="hidden lg:inline">Pilih foto dari laptop atau pakai webcam. Waktu dan rak terisi sendiri.</span>
+                </span>
+              </span>
+            </label>
+            {/* Konteks otomatis: rak terakhir, bisa diganti 1 ketukan */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-xl bg-card p-4">
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <label htmlFor={`${ids}-rack`} className="text-sm text-muted-foreground">Ditaruh di rak</label>
+                <div className="relative w-fit">
+                  <select id={`${ids}-rack`} value={locationId ?? ""} disabled={locations.length === 0}
+                    onChange={(e) => { const v = Number(e.target.value); setLocationId(v); saveLastLocation(v); }}
+                    className="tape cursor-pointer appearance-none pr-8 text-xl">
+                    {locations.length === 0 && <option value="">Belum ada rak</option>}
+                    {locations.map((l) => <option key={l.id} value={l.id}>{l.code}</option>)}
+                  </select>
+                  <ChevronDown aria-hidden className="pointer-events-none absolute top-1/2 right-2 size-4 -translate-y-1/2 text-[#1c1f1e]" />
+                </div>
+                {location && <p className="text-sm text-muted-foreground">{location.name}</p>}
+              </div>
+              <Button type="button" variant="outline" onClick={openForm} className="w-full sm:w-auto">Lapor tanpa foto</Button>
+            </div>
           </div>
           {aside}
         </div>
@@ -230,7 +240,7 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
         <Button type="button" variant="ghost" size="icon" onClick={reset} aria-label="Batal" className="-ml-2">
           <ChevronLeft />
         </Button>
-        <h1 className="flex-1 text-[17px] font-semibold">Laporan baru</h1>
+        <h1 className="flex-1 text-2xl font-extrabold [font-stretch:72%]">Laporan baru</h1>
         <Button asChild variant="link" size="sm" className="lg:hidden">
           <label htmlFor={`${ids}-photo`}>{file ? "Foto ulang" : "Tambah foto"}</label>
         </Button>
@@ -242,7 +252,7 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
             // eslint-disable-next-line @next/next/no-img-element -- preview blob lokal
             <img src={preview} alt="Foto barang yang akan dilaporkan" className="absolute inset-0 size-full object-cover" />
           ) : (
-            <span className="font-mono text-xs">{kind === "ALAT" && effAction === "TARUH" ? "foto wajib untuk Taruh" : "foto opsional"}</span>
+            <span className="text-sm">{kind === "ALAT" && effAction === "TARUH" ? "Foto wajib untuk Taruh" : "Foto opsional"}</span>
           )}
         </div>
         <Button asChild variant="link" size="sm" className="hidden w-fit px-0 lg:inline-flex">
@@ -322,13 +332,13 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
               <FieldLabel htmlFor={`${ids}-loc`}><MapPin aria-hidden className="size-4" /> Lokasi</FieldLabel>
               <NativeSelect id={`${ids}-loc`} value={locationId ?? ""} onChange={(e) => setLocationId(Number(e.target.value))} required>
                 {locations.length === 0 && <NativeSelectOption value="">Belum ada lokasi. Minta PLSS menambahkan.</NativeSelectOption>}
-                {locations.map((l) => <NativeSelectOption key={l.id} value={l.id}>{l.code} · {l.name}</NativeSelectOption>)}
+                {locations.map((l) => <NativeSelectOption key={l.id} value={l.id}>{l.code} ({l.name})</NativeSelectOption>)}
               </NativeSelect>
             </Field>
           )}
-          <AutoRow icon={Clock} label="Waktu · otomatis" value={fmtDateTime(takenAt)} />
+          <AutoRow icon={Clock} label="Waktu, otomatis" value={fmtDateTime(takenAt)} />
           {kind === "ALAT" && (
-            <AutoRow icon={LocateFixed} label="GPS · otomatis" value={
+            <AutoRow icon={LocateFixed} label="GPS, otomatis" value={
               gps.state === "ok" ? `${gps.lat!.toFixed(4)}, ${gps.lng!.toFixed(4)} ±${Math.round(gps.acc!)} m`
               : gps.state === "loading" ? "mencari..." : "tidak tersedia"} />
           )}
@@ -386,7 +396,7 @@ function AutoRow({ icon: Icon, label, value }: { icon: LucideIcon; label: string
     <div className="flex items-center gap-2.5">
       <Icon aria-hidden className="size-[18px] text-muted-foreground" />
       <div>
-        <p className="font-mono text-xs font-medium uppercase text-muted-foreground">{label}</p>
+        <p className="text-sm text-muted-foreground">{label}</p>
         <p className="font-mono text-[15px] font-medium">{value}</p>
       </div>
     </div>

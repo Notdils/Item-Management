@@ -48,7 +48,7 @@ export default async function OpnamePage({ searchParams }: { searchParams: Promi
                   <FieldLabel htmlFor="location">Lokasi</FieldLabel>
                   <NativeSelect id="location" name="location" required defaultValue="">
                     <NativeSelectOption value="" disabled>Pilih lokasi</NativeSelectOption>
-                    {((locs.data ?? []) as Location[]).map((l) => <NativeSelectOption key={l.id} value={l.id}>{l.code} · {l.name}</NativeSelectOption>)}
+                    {((locs.data ?? []) as Location[]).map((l) => <NativeSelectOption key={l.id} value={l.id}>{l.code} ({l.name})</NativeSelectOption>)}
                   </NativeSelect>
                 </Field>
                 <Field>
@@ -66,7 +66,7 @@ export default async function OpnamePage({ searchParams }: { searchParams: Promi
         </Card>
 
         <section className="flex flex-col gap-2">
-          <h2 className="eyebrow text-muted-foreground">Stok tercatat</h2>
+          <h2 className="text-lg font-bold">Stok tercatat</h2>
           <Card className="gap-0 p-0 md:hidden">
             <ul>
               {stock.map((l) => (

@@ -12,9 +12,9 @@ self.addEventListener("activate", (e) => {
 });
 
 const OFFLINE_HTML = `<!doctype html><html lang="id"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Offline · Bengkel Anargya</title><body style="margin:0;min-height:100dvh;display:grid;place-items:center;background:#0c1211;color:#ece5d8;font-family:system-ui;padding:24px;text-align:center">
+<title>Offline · Bengkel Anargya</title><body style="margin:0;min-height:100dvh;display:grid;place-items:center;background:#e3e4df;color:#1c1f1e;font-family:system-ui;padding:24px;text-align:center">
 <div><h1 style="font-size:24px">Tidak ada koneksi</h1><p style="opacity:.7">Laporan butuh internet supaya tercatat. Coba lagi saat sinyal kembali.</p>
-<button onclick="location.reload()" style="min-height:48px;padding:0 20px;border:0;border-radius:10px;background:#29d970;color:#06130c;font-weight:600">Coba lagi</button></div></body></html>`;
+<button onclick="location.reload()" style="min-height:48px;padding:0 20px;border:0;border-radius:10px;background:#1c1f1e;color:#f6f6f2;font-weight:600">Coba lagi</button></div></body></html>`;
 
 self.addEventListener("fetch", (e) => {
   const req = e.request;

@@ -40,18 +40,18 @@ ed('card.tsx', [
 ])
 ed('table.tsx', [
  ('className="relative w-full overflow-x-auto"', 'className="relative w-full overflow-x-auto rounded-xl bg-card"'),
- ('"h-10 px-2 text-left align-middle font-medium whitespace-nowrap text-foreground', '"h-11 px-4 text-left align-middle font-mono text-xs font-medium whitespace-nowrap uppercase text-muted-foreground'),
+ ('"h-10 px-2 text-left align-middle font-medium whitespace-nowrap text-foreground', '"h-11 px-4 text-left align-middle text-[13px] font-semibold whitespace-nowrap text-muted-foreground'),
  ('"p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]', '"px-4 py-3 align-middle [&:has([role=checkbox])]'),
 ])
 ed('alert.tsx', [
- ('        destructive:\n          "bg-card text-destructive', '        // Figma: kartu bergaris hijau (berhasil) / kuning (peringatan)\n        success: "border-primary bg-card text-card-foreground",\n        warning: "border-warn bg-card text-card-foreground",\n        destructive:\n          "bg-card text-destructive'),
+ ('        destructive:\n          "bg-card text-destructive', '        // Figma: kartu bergaris hijau (berhasil) / kuning (peringatan)\n        success: "border-ok bg-card text-card-foreground",\n        warning: "border-warn bg-card text-card-foreground",\n        destructive:\n          "bg-card text-destructive'),
 ])
 ed('field.tsx', [
- ('"group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50",', '// Figma: label form mono, huruf besar, abu\n        "group/field-label peer/field-label flex w-fit gap-2 font-mono text-xs leading-snug font-medium uppercase text-muted-foreground group-data-[disabled=true]/field:opacity-50",'),
+ ('"group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50",', '// Label form: tebal, kalimat biasa\n        "group/field-label peer/field-label flex w-fit gap-2 text-sm leading-snug font-semibold text-foreground group-data-[disabled=true]/field:opacity-50",'),
  ('"group/field flex w-full gap-3 data-[invalid=true]:text-destructive"', '"group/field flex w-full gap-1.5 data-[invalid=true]:text-destructive"'),
 ])
 ed('badge.tsx', [
- ('        link: "text-primary underline-offset-4 [a&]:hover:underline",', '        link: "text-primary underline-offset-4 [a&]:hover:underline",\n        // Figma: label status mono tanpa latar (DI RAK, DIPEGANG, > 12 JAM)\n        ok: "rounded-none px-0 py-0 font-mono text-[11px] uppercase text-primary",\n        warn: "rounded-none px-0 py-0 font-mono text-[11px] uppercase text-warn",\n        muted: "rounded-none px-0 py-0 font-mono text-[11px] uppercase text-muted-foreground",'),
+ ('        link: "text-primary underline-offset-4 [a&]:hover:underline",', '        link: "text-primary underline-offset-4 [a&]:hover:underline",\n        // Status barang: kalimat biasa, warna sesuai keadaan; "warn" diberi latar supaya menonjol\n        ok: "rounded-none px-0 py-0 text-[13px] font-semibold text-ok",\n        warn: "rounded-sm bg-warn/12 px-2 py-0.5 text-[13px] font-semibold text-warn",\n        muted: "rounded-none px-0 py-0 text-[13px] font-medium text-muted-foreground",'),
 ])
 ed('toggle.tsx', [
  ('        outline:\n          "border border-input bg-transparent shadow-xs hover:bg-accent hover:text-accent-foreground",', '        outline:\n          "border border-input bg-transparent shadow-xs hover:bg-accent hover:text-accent-foreground",\n        // Figma: segmented control (Taruh/Ambil, Pakai/Tambah); item aktif hijau\n        segmented:\n          "h-auto min-h-13 flex-col gap-0.5 rounded-[9px] bg-transparent py-2 hover:bg-accent data-[state=on]:bg-primary data-[state=on]:text-primary-foreground",'),
