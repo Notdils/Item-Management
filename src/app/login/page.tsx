@@ -1,10 +1,21 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { getSessionProfile } from "@/lib/session";
+import { signOut } from "./actions";
 import { LoginForm } from "./LoginForm";
 
 export const metadata: Metadata = { title: "Masuk" };
 
 // Mobile & tablet: satu kolom. Desktop: panel brand kiri + form kanan (Figma "Bengkel · Login").
-export default function LoginPage() {
+export default async function LoginPage() {
+  const { uid, profile } = await getSessionProfile();
+  // Sudah login dan profil ada: langsung ke aplikasi. Sudah login tapi profil tidak ada:
+  // jangan redirect (itu yang dulu memicu loop), tampilkan penjelasan + tombol keluar.
+  if (profile) redirect("/");
+  const orphan = !!uid;
+
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-2">
       <aside className="hidden flex-col justify-between border-r border-border bg-card p-16 lg:flex">
@@ -26,7 +37,19 @@ export default function LoginPage() {
           </h1>
           <p className="text-muted-foreground">Setiap laporan tercatat atas nama kamu.</p>
         </header>
-        <LoginForm />
+        {orphan ? (
+          <Alert variant="warning">
+            <AlertTitle>Akun ini belum punya profil</AlertTitle>
+            <AlertDescription>
+              <p>Kamu sudah masuk, tetapi data profil akun ini belum ada di database. Minta PLSS menjalankan <code>supabase/bootstrap.sql</code> atau membuatkan akun lewat menu Anggota.</p>
+              <form action={signOut} className="mt-3">
+                <Button variant="outline">Keluar dan masuk dengan akun lain</Button>
+              </form>
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <LoginForm />
+        )}
         <p className="text-sm text-muted-foreground">Belum punya akun? Minta dibuatkan oleh PLSS.</p>
       </main>
     </div>

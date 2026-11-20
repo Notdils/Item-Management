@@ -19,17 +19,15 @@ export async function middleware(request: NextRequest) {
     },
   );
 
+  // Middleware hanya mengusir tamu. Pengalihan user yang sudah login dari /login ke / dilakukan
+  // halaman login sendiri, dan hanya kalau profilnya ada. Kalau middleware juga ikut mengalihkan,
+  // akun tanpa profil memicu loop /login <-> / (ERR_TOO_MANY_REDIRECTS).
   const { data } = await supabase.auth.getClaims();
   const isLogin = request.nextUrl.pathname.startsWith("/login");
   if (!data?.claims && !isLogin) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";
-    return NextResponse.redirect(url);
-  }
-  if (data?.claims && isLogin) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
     return NextResponse.redirect(url);
   }
   return response;
