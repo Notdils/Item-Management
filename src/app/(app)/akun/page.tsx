@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/session";
-import { Icon } from "@/components/Icon";
 import { signOut } from "@/app/login/actions";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { Flash } from "./Flash";
 import { updateName } from "./actions";
 
@@ -15,7 +19,7 @@ export default async function AkunPage({ searchParams }: { searchParams: Promise
   const plss = profile.division === "PLSS";
   const supabase = await createClient();
 
-  let menu: { href: string; label: string; meta: string; warn?: boolean; download?: boolean }[] = [];
+  let menu: { href: string; label: string; meta: string; download?: boolean }[] = [];
   if (plss) {
     const count = (t: "locations" | "items" | "profiles") =>
       supabase.from(t).select("id", { count: "exact", head: true }).then((r) => r.count ?? 0);
@@ -35,44 +39,50 @@ export default async function AkunPage({ searchParams }: { searchParams: Promise
   return (
     <>
       <header className="flex flex-col gap-1.5">
-        <p className="eyebrow text-green">{plss ? "PLSS · Admin data" : "Teknikal"}</p>
+        <p className="eyebrow text-primary">{plss ? "PLSS · Admin data" : "Teknikal"}</p>
         <h1 className="title">{profile.full_name}</h1>
       </header>
       <Flash {...sp} />
 
       {menu.length > 0 && (
-        <ul className="card divide-y divide-line">
-          {menu.map((m) => (
-            <li key={m.href}>
-              {m.download ? (
-                <a href={m.href} download className="flex items-center gap-3 px-3.5 py-4">
-                  <span className="flex-1 font-medium">{m.label}</span>
-                  <span className="mono text-xs text-ink-2">{m.meta}</span>
-                  <Icon name="chev" size={18} className="text-[#5b6764]" />
-                </a>
-              ) : (
-                <Link href={m.href} className="flex items-center gap-3 px-3.5 py-4">
-                  <span className="flex-1 font-medium">{m.label}</span>
-                  <span className="mono text-xs text-ink-2">{m.meta}</span>
-                  <Icon name="chev" size={18} className="text-[#5b6764]" />
-                </Link>
-              )}
-            </li>
-          ))}
-        </ul>
+        <nav aria-label="Menu admin">
+          <ul className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3 lg:grid-cols-3">
+            {menu.map((m) => {
+              const body = (
+                <>
+                  <span className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="font-medium">{m.label}</span>
+                    <span className="font-mono text-xs text-muted-foreground">{m.meta}</span>
+                  </span>
+                  <ChevronRight aria-hidden className="size-[18px] text-muted-foreground" />
+                </>
+              );
+              return (
+                <li key={m.href}>
+                  <Card className="p-0 hover:bg-accent">
+                    {m.download
+                      ? <a href={m.href} download className="flex items-center gap-3 px-4 py-4">{body}</a>
+                      : <Link href={m.href} className="flex items-center gap-3 px-4 py-4">{body}</Link>}
+                  </Card>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
       )}
 
-      <form action={updateName} className="flex flex-col gap-3">
-        <div>
-          <label htmlFor="name" className="field-label">Nama tampilan</label>
-          <input id="name" name="name" defaultValue={profile.full_name} className="input" autoComplete="name"
-            required minLength={2} maxLength={80} />
-        </div>
-        <button className="btn btn-line">Simpan nama</button>
+      <form action={updateName} className="lg:max-w-[456px]">
+        <FieldGroup className="gap-3">
+          <Field>
+            <FieldLabel htmlFor="name">Nama tampilan</FieldLabel>
+            <Input id="name" name="name" defaultValue={profile.full_name} autoComplete="name" required minLength={2} maxLength={80} />
+          </Field>
+          <Button variant="outline">Simpan nama</Button>
+        </FieldGroup>
       </form>
 
       <form action={signOut}>
-        <button className="btn btn-line w-full">Keluar</button>
+        <Button variant="outline" className="w-full lg:w-[200px]">Keluar</Button>
       </form>
     </>
   );

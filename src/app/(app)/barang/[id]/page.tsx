@@ -1,16 +1,26 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ChevronLeft, Hand, MapPin, PackageOpen } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { signPhotos } from "@/lib/photos";
 import { fmtAgo, fmtShort } from "@/lib/format";
-import { Icon } from "@/components/Icon";
 import { Thumb } from "@/components/ItemRow";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import type { ItemOverview, StockLevel } from "@/lib/types";
 
 type Report = { id: number; kind: "TARUH" | "AMBIL"; created_at: string; photo_path: string | null; note: string | null;
   profiles: { full_name: string } | null; locations: { code: string; name: string } | null };
 type Move = { id: number; kind: "MASUK" | "PAKAI" | "OPNAME"; qty_delta: number; created_at: string; note: string | null;
   profiles: { full_name: string } | null; locations: { code: string } | null };
+type Entry = {
+  id: number; when: string; action: string; where: string; who: string; note: string | null;
+  tone: "ok" | "warn"; photo?: string | null;
+};
 
 export default async function BarangPage({ params }: { params: Promise<{ id: string }> }) {
   const id = Number((await params).id);
@@ -27,25 +37,30 @@ export default async function BarangPage({ params }: { params: Promise<{ id: str
       supabase.from("stock_moves").select("id, kind, qty_delta, created_at, note, profiles(full_name), locations(code)")
         .eq("item_id", id).order("created_at", { ascending: false }).limit(30),
     ]);
+    const lv = (levels.data ?? []) as StockLevel[];
     return (
       <>
         <BackLink />
         <Head label={`Habis pakai · ${item.unit ?? "pcs"}`} name={item.name} />
-        <section className="card flex flex-col divide-y divide-line">
-          {((levels.data ?? []) as StockLevel[]).map((l) => (
-            <div key={l.location_id} className="flex items-center justify-between px-4 py-3.5">
-              <span><span className="font-semibold">{l.location_code}</span> <span className="text-sm text-ink-2">{l.location_name}</span></span>
-              <span className="mono text-xl font-medium">{l.qty}</span>
-            </div>
-          ))}
-          {!levels.data?.length && <p className="px-4 py-3.5 text-sm text-ink-2">Belum ada stok tercatat.</p>}
-        </section>
-        <Link href={`/?item=${enc}&aksi=PAKAI`} className="btn btn-primary">Pakai</Link>
+        {lv.length > 0 ? (
+          <Card className="gap-0 p-0">
+            {lv.map((l) => (
+              <div key={l.location_id} className="flex items-center justify-between border-b px-4 py-3.5 last:border-b-0">
+                <span><span className="font-semibold">{l.location_code}</span> <span className="text-sm text-muted-foreground">{l.location_name}</span></span>
+                <span className="font-mono text-xl font-medium">{l.qty}</span>
+              </div>
+            ))}
+          </Card>
+        ) : <EmptyHistory text="Belum ada stok tercatat." />}
+        <Button asChild className="md:w-fit md:min-w-56"><Link href={`/?item=${enc}&aksi=PAKAI`}>Pakai</Link></Button>
         <History title="Riwayat stok" entries={((moves.data ?? []) as unknown as Move[]).map((m) => ({
           id: m.id,
-          title: `${m.kind === "MASUK" ? "Masuk" : m.kind === "PAKAI" ? "Dipakai" : "Opname"} ${m.qty_delta > 0 ? "+" : ""}${m.qty_delta} di ${m.locations?.code}`,
-          meta: `${m.profiles?.full_name} · ${fmtShort(m.created_at)}${m.note ? ` · ${m.note}` : ""}`,
-          tone: m.kind === "PAKAI" ? "warn" : "green",
+          when: fmtShort(m.created_at),
+          action: `${m.kind === "MASUK" ? "Masuk" : m.kind === "PAKAI" ? "Dipakai" : "Opname"} ${m.qty_delta > 0 ? "+" : ""}${m.qty_delta}`,
+          where: m.locations?.code ?? "-",
+          who: m.profiles?.full_name ?? "-",
+          note: m.note,
+          tone: m.kind === "PAKAI" ? "warn" : "ok",
         }))} />
       </>
     );
@@ -58,43 +73,53 @@ export default async function BarangPage({ params }: { params: Promise<{ id: str
   const photos = await signPhotos(supabase, rows.map((r) => r.photo_path));
   const last = rows[0];
   const lastPhoto = rows.find((r) => r.photo_path);
+  const placed = last?.kind === "TARUH";
 
   return (
     <>
       <BackLink />
-      <div className="grid aspect-[16/10] place-items-center overflow-hidden rounded-[14px] bg-surface-2 text-ink-2">
-        {lastPhoto?.photo_path && photos.get(lastPhoto.photo_path) ? (
-          // eslint-disable-next-line @next/next/no-img-element -- signed URL
-          <img src={photos.get(lastPhoto.photo_path)} alt={`Foto terakhir ${item.name}`} className="size-full object-cover" />
-        ) : <span className="mono text-xs">belum ada foto</span>}
-      </div>
-      <Head label={`Alat · #${item.id}`} name={item.name} />
+      <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[480px_minmax(0,1fr)] lg:items-start lg:gap-8">
+        <div className="relative grid aspect-video place-items-center overflow-hidden rounded-[14px] bg-muted text-muted-foreground lg:aspect-[4/3]">
+          {lastPhoto?.photo_path && photos.get(lastPhoto.photo_path) ? (
+            // eslint-disable-next-line @next/next/no-img-element -- signed URL
+            <img src={photos.get(lastPhoto.photo_path)} alt={`Foto terakhir ${item.name}`} className="absolute inset-0 size-full object-cover" />
+          ) : <span className="font-mono text-xs">belum ada foto</span>}
+        </div>
+        <div className="flex flex-col gap-5">
+          <Head label={`Alat · #${item.id}`} name={item.name} />
 
-      {last ? (
-        <section className={`card flex flex-col gap-1.5 border p-4 ${last.kind === "TARUH" ? "border-green" : "border-warn"}`}>
-          <p className="flex items-center gap-2 text-lg font-bold">
-            <Icon name={last.kind === "TARUH" ? "pin" : "hand"} size={20} className={last.kind === "TARUH" ? "text-green" : "text-warn"} />
-            {last.kind === "TARUH" ? `${last.locations?.code} · ${last.locations?.name}` : `Dipegang ${last.profiles?.full_name}`}
-          </p>
-          <p className="mono text-xs text-ink-2">
-            {last.kind === "TARUH" ? "Ditaruh" : "Diambil"} oleh {last.profiles?.full_name} · {fmtAgo(last.created_at)}
-            {last.note ? ` · ${last.note}` : ""}
-          </p>
-        </section>
-      ) : <p className="card p-4 text-sm text-ink-2">Belum ada laporan posisi.</p>}
+          {last ? (
+            <Card className={cn("border", placed ? "border-primary" : "border-warn")}>
+              <CardHeader className="gap-1.5">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  {placed ? <MapPin aria-hidden className="size-5 text-primary" /> : <Hand aria-hidden className="size-5 text-warn" />}
+                  {placed ? `${last.locations?.code} · ${last.locations?.name}` : `Dipegang ${last.profiles?.full_name}`}
+                </CardTitle>
+                <CardDescription className="font-mono text-xs">
+                  {placed ? "Ditaruh" : "Diambil"} oleh {last.profiles?.full_name} · {fmtAgo(last.created_at)}
+                  {last.note ? ` · ${last.note}` : ""}
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          ) : <EmptyHistory text="Belum ada laporan posisi." />}
 
-      <div className="grid grid-cols-2 gap-2">
-        {last?.kind === "AMBIL"
-          ? <Link href={`/?item=${enc}&aksi=TARUH`} className="btn btn-primary">Taruh</Link>
-          : <Link href={`/?item=${enc}&aksi=AMBIL`} className="btn btn-primary">Ambil barang</Link>}
-        <Link href={`/?item=${enc}&aksi=TARUH`} className="btn btn-line">Pindah</Link>
+          <div className="grid grid-cols-2 gap-3">
+            {last?.kind === "AMBIL"
+              ? <Button asChild><Link href={`/?item=${enc}&aksi=TARUH`}>Taruh</Link></Button>
+              : <Button asChild><Link href={`/?item=${enc}&aksi=AMBIL`}>Ambil barang</Link></Button>}
+            <Button asChild variant="outline"><Link href={`/?item=${enc}&aksi=TARUH`}>Pindah</Link></Button>
+          </div>
+        </div>
       </div>
 
       <History title="Riwayat" entries={rows.map((r) => ({
         id: r.id,
-        title: r.kind === "TARUH" ? `Ditaruh di ${r.locations?.code}` : "Diambil",
-        meta: `${r.profiles?.full_name} · ${fmtShort(r.created_at)}${r.note ? ` · ${r.note}` : ""}`,
-        tone: r.kind === "TARUH" ? "green" : "warn",
+        when: fmtShort(r.created_at),
+        action: r.kind === "TARUH" ? "Ditaruh" : "Diambil",
+        where: r.locations?.code ?? "-",
+        who: r.profiles?.full_name ?? "-",
+        note: r.note,
+        tone: r.kind === "TARUH" ? "ok" : "warn",
         photo: r.photo_path ? photos.get(r.photo_path) : null,
       }))} />
     </>
@@ -103,40 +128,70 @@ export default async function BarangPage({ params }: { params: Promise<{ id: str
 
 function BackLink() {
   return (
-    <Link href="/cari" className="-ml-2 flex w-fit items-center gap-2 pr-2 text-[17px] font-semibold">
-      <Icon name="back" /> Cari
-    </Link>
+    <Button asChild variant="ghost" className="-ml-3 w-fit px-3 text-[17px]">
+      <Link href="/cari"><ChevronLeft data-icon="inline-start" />Cari</Link>
+    </Button>
   );
 }
 
 function Head({ label, name }: { label: string; name: string }) {
   return (
     <header className="flex flex-col gap-1.5">
-      <p className="eyebrow text-green">{label}</p>
-      <h1 className="title text-[1.75rem]">{name}</h1>
+      <p className="eyebrow text-primary">{label}</p>
+      <h1 className="title">{name}</h1>
     </header>
   );
 }
 
-function History({ title, entries }: {
-  title: string; entries: { id: number; title: string; meta: string; tone: "green" | "warn"; photo?: string | null }[];
-}) {
-  if (!entries.length) return null;
+function EmptyHistory({ text }: { text: string }) {
   return (
-    <section aria-label={title}>
-      <h2 className="eyebrow mb-1 text-ink-2">{title}</h2>
-      <ol>
+    <Empty className="border p-6 md:p-6">
+      <EmptyHeader>
+        <EmptyMedia variant="icon"><PackageOpen /></EmptyMedia>
+        <EmptyTitle>Belum ada data</EmptyTitle>
+        <EmptyDescription>{text}</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
+  );
+}
+
+function History({ title, entries }: { title: string; entries: Entry[] }) {
+  if (!entries.length) return null;
+  const withPhoto = entries.some((e) => e.photo !== undefined);
+  return (
+    <section aria-label={title} className="flex flex-col gap-2">
+      <h2 className="eyebrow text-muted-foreground">{title}</h2>
+      {/* Mobile: daftar · Tablet/desktop: tabel */}
+      <ol className="md:hidden">
         {entries.map((e) => (
           <li key={e.id} className="flex items-center gap-3 py-2.5">
-            <span aria-hidden className={`size-2.5 shrink-0 rounded-full ${e.tone === "green" ? "bg-green" : "bg-warn"}`} />
+            <Badge variant={e.tone} className="w-20 shrink-0">{e.action}</Badge>
             <div className="min-w-0 flex-1">
-              <p className="font-medium">{e.title}</p>
-              <p className="mono text-xs text-ink-2">{e.meta}</p>
+              <p className="font-medium">{e.where}</p>
+              <p className="font-mono text-xs text-muted-foreground">{e.who} · {e.when}{e.note ? ` · ${e.note}` : ""}</p>
             </div>
             {e.photo !== undefined && <Thumb src={e.photo} size={40} />}
           </li>
         ))}
       </ol>
+      <div className="hidden md:block">
+        <Table>
+          <TableHeader>
+            <TableRow><TableHead className="w-40">Waktu</TableHead><TableHead className="w-32">Aksi</TableHead><TableHead>Lokasi</TableHead><TableHead className="w-44">Oleh</TableHead>{withPhoto && <TableHead className="hidden w-16 lg:table-cell">Foto</TableHead>}</TableRow>
+          </TableHeader>
+          <TableBody>
+            {entries.map((e) => (
+              <TableRow key={e.id}>
+                <TableCell className="font-mono text-xs">{e.when}</TableCell>
+                <TableCell><Badge variant={e.tone}>{e.action}</Badge></TableCell>
+                <TableCell>{e.where}{e.note ? <span className="text-muted-foreground"> · {e.note}</span> : null}</TableCell>
+                <TableCell>{e.who}</TableCell>
+                {withPhoto && <TableCell className="hidden lg:table-cell"><Thumb src={e.photo} size={40} /></TableCell>}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </section>
   );
 }

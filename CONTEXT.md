@@ -14,8 +14,9 @@ Dokumen serah terima untuk chat Claude berikutnya. Baca: `D:\CONTEXT.md` (peta s
 | Kode | `D:\bengkel-anargya` |
 | GitHub | `Notdils/Item-Management` (git dipegang user) |
 | Supabase | project `hbfayzjeygyybaksvifo` |
-| Figma | page "Bengkel Anargya: Mobile" (node `306:24`) di file `dAypXrqoA5G3zaGGk71ldJ` |
-| Skill | `modern-web-guidance` terpasang di `.claude/skills/` (dipakai untuk UI) |
+| Figma | page "Bengkel Anargya" (node `306:24`) di file `dAypXrqoA5G3zaGGk71ldJ`: 13 section per halaman, masing-masing Desktop 1280 / Tablet 800 / Mobile 390 |
+| Skill | `.claude/skills/`: `modern-web-guidance`, `shadcn`, `migrate-radix-to-base`. Folder skill agen lain sudah dihapus atas permintaan user |
+| UI | shadcn/ui (`components.json`, `src/components/ui`). Setelah `npx shadcn add`, jalankan `python scripts/customize-ui.py src/components/ui` |
 
 ## Keputusan dari user
 - Website + PWA. Alur: foto → nama → waktu & lokasi otomatis → submit. Login wajib supaya ketahuan siapa yang lapor.

@@ -1,11 +1,28 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { requirePlss } from "@/lib/session";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Profile } from "@/lib/types";
 import { AdminHead, Flash } from "../Flash";
 import { addMember, setDivision } from "../actions";
+import { DivisionToggle } from "../DivisionToggle";
 
 export const metadata: Metadata = { title: "Anggota" };
+
+function DivisionButton({ p }: { p: Profile }) {
+  return (
+    <form action={setDivision}>
+      <input type="hidden" name="id" value={p.id} />
+      <input type="hidden" name="division" value={p.division === "PLSS" ? "TEKNIKAL" : "PLSS"} />
+      <Button variant="outline" size="sm">{p.division === "PLSS" ? "Jadikan teknikal" : "Jadikan PLSS"}</Button>
+    </form>
+  );
+}
 
 export default async function AnggotaPage({ searchParams }: { searchParams: Promise<{ pesan?: string; galat?: string }> }) {
   const sp = await searchParams;
@@ -18,47 +35,65 @@ export default async function AnggotaPage({ searchParams }: { searchParams: Prom
     <>
       <AdminHead title="Anggota" />
       <Flash {...sp} />
-      <form action={addMember} className="card flex flex-col gap-3 p-3.5">
-        <h2 className="font-semibold">Buat akun</h2>
-        <div>
-          <label htmlFor="m-name" className="field-label">Nama</label>
-          <input id="m-name" name="name" className="input" required minLength={2} maxLength={80} autoComplete="off" />
-        </div>
-        <div>
-          <label htmlFor="m-email" className="field-label">Email</label>
-          <input id="m-email" name="email" type="email" className="input" required autoComplete="off" spellCheck={false} />
-        </div>
-        <div>
-          <label htmlFor="m-pass" className="field-label">Kata sandi awal</label>
-          <input id="m-pass" name="password" type="text" className="input mono" required minLength={8} autoComplete="new-password"
-            aria-describedby="m-pass-help" />
-          <p id="m-pass-help" className="mt-1 text-xs text-ink-2">Minimal 8 karakter. Berikan langsung ke orangnya.</p>
-        </div>
-        <fieldset className="segmented">
-          <legend className="sr-only">Divisi</legend>
-          <label><input type="radio" name="division" value="TEKNIKAL" defaultChecked /><span className="font-semibold">Teknikal</span></label>
-          <label><input type="radio" name="division" value="PLSS" /><span className="font-semibold">PLSS</span></label>
-        </fieldset>
-        <button className="btn btn-primary">Buat akun</button>
-      </form>
+      <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start lg:gap-6">
+        <Card>
+          <CardHeader><CardTitle>Buat akun</CardTitle></CardHeader>
+          <CardContent>
+            <form action={addMember}>
+              <FieldGroup className="gap-4">
+                <Field>
+                  <FieldLabel htmlFor="m-name">Nama</FieldLabel>
+                  <Input id="m-name" name="name" required minLength={2} maxLength={80} autoComplete="off" />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="m-email">Email</FieldLabel>
+                  <Input id="m-email" name="email" type="email" required autoComplete="off" spellCheck={false} />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="m-pass">Kata sandi awal</FieldLabel>
+                  <Input id="m-pass" name="password" type="text" className="font-mono" required minLength={8} autoComplete="new-password" aria-describedby="m-pass-help" />
+                  <FieldDescription id="m-pass-help">Minimal 8 karakter. Berikan langsung ke orangnya.</FieldDescription>
+                </Field>
+                <FieldSet className="gap-2">
+                  <FieldLegend variant="label" className="sr-only">Divisi</FieldLegend>
+                  <DivisionToggle />
+                </FieldSet>
+                <Button>Buat akun</Button>
+              </FieldGroup>
+            </form>
+          </CardContent>
+        </Card>
 
-      <ul className="card divide-y divide-line">
-        {rows.map((p) => (
-          <li key={p.id} className="flex items-center gap-3 px-3.5 py-3">
-            <span className="flex-1">
-              <span className="block font-medium">{p.full_name}{p.id === me.id ? " (kamu)" : ""}</span>
-              <span className={`mono text-xs ${p.division === "PLSS" ? "text-green" : "text-ink-2"}`}>{p.division}</span>
-            </span>
-            {p.id !== me.id && (
-              <form action={setDivision}>
-                <input type="hidden" name="id" value={p.id} />
-                <input type="hidden" name="division" value={p.division === "PLSS" ? "TEKNIKAL" : "PLSS"} />
-                <button className="btn btn-line btn-sm">{p.division === "PLSS" ? "Jadikan teknikal" : "Jadikan PLSS"}</button>
-              </form>
-            )}
-          </li>
-        ))}
-      </ul>
+        <div>
+          <Card className="gap-0 p-0 md:hidden">
+            <ul>
+              {rows.map((p) => (
+                <li key={p.id} className="flex items-center gap-3 border-b px-3.5 py-3 last:border-b-0">
+                  <span className="flex flex-1 flex-col gap-1">
+                    <span className="font-medium">{p.full_name}{p.id === me.id ? " (kamu)" : ""}</span>
+                    <Badge variant={p.division === "PLSS" ? "ok" : "muted"}>{p.division}</Badge>
+                  </span>
+                  {p.id !== me.id && <DivisionButton p={p} />}
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader><TableRow><TableHead>Nama</TableHead><TableHead className="w-32">Divisi</TableHead><TableHead className="w-48"><span className="sr-only">Aksi</span></TableHead></TableRow></TableHeader>
+              <TableBody>
+                {rows.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="font-semibold">{p.full_name}{p.id === me.id ? " (kamu)" : ""}</TableCell>
+                    <TableCell><Badge variant={p.division === "PLSS" ? "ok" : "muted"}>{p.division}</Badge></TableCell>
+                    <TableCell>{p.id !== me.id && <DivisionButton p={p} />}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </div>
     </>
   );
 }

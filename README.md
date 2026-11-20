@@ -5,7 +5,7 @@ PWA untuk mencatat **di mana barang bengkel berada**. Anak teknikal cukup memfot
 Dibuat untuk penilaian backend internship Web Development Anargya ITS EV Team.
 
 - Desain: Figma, page **"Bengkel Anargya: Mobile"** (`https://www.figma.com/design/dAypXrqoA5G3zaGGk71ldJ?node-id=306-24`)
-- Stack: Next.js 15 (App Router) · Supabase (Postgres, Auth, Storage) · Tailwind v4 · PWA
+- Stack: Next.js 15 (App Router) · Supabase (Postgres, Auth, Storage) · Tailwind v4 · shadcn/ui · PWA
 
 ## Masalah dan solusinya
 
@@ -102,8 +102,7 @@ supabase/
   seed_demo.sql           data demo (opsional)
   tests/                  tes skema + konkurensi
 src/
-  app/(app)/page.tsx      Lapor (kamera → form)
-  app/(app)/Reporter.tsx  alur foto, kompres, unggah, panggil RPC
+  app/(app)/(lapor)/      Lapor: page.tsx (kamera → form) + Reporter.tsx
   app/(app)/cari          cari barang
   app/(app)/barang/[id]   detail + riwayat
   app/(app)/dipegang      alat yang sedang dipegang (> 12 jam ditandai)

@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { requirePlss } from "@/lib/session";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Location, StockLevel } from "@/lib/types";
 import { AdminHead, Flash } from "../Flash";
 import { opname } from "../actions";
@@ -16,48 +22,77 @@ export default async function OpnamePage({ searchParams }: { searchParams: Promi
     supabase.from("locations").select("id, code, name, archived_at").is("archived_at", null).order("code"),
     supabase.from("stock_levels").select("*").order("name"),
   ]);
+  const stock = (levels.data ?? []) as StockLevel[];
 
   return (
     <>
       <AdminHead title="Opname stok" />
-      <p className="text-sm text-ink-2">Isi hasil hitung fisik. Selisihnya dicatat sebagai mutasi OPNAME, riwayat lama tidak diubah.</p>
       <Flash {...sp} />
-      <form action={opname} className="card flex flex-col gap-3 p-3.5">
-        <div>
-          <label htmlFor="item" className="field-label">Barang</label>
-          <select id="item" name="item" className="input" required defaultValue="">
-            <option value="" disabled>Pilih barang habis pakai</option>
-            {(items.data ?? []).map((i: { name: string }) => <option key={i.name} value={i.name}>{i.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="location" className="field-label">Lokasi</label>
-          <select id="location" name="location" className="input" required defaultValue="">
-            <option value="" disabled>Pilih lokasi</option>
-            {((locs.data ?? []) as Location[]).map((l) => <option key={l.id} value={l.id}>{l.code} · {l.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="qty" className="field-label">Jumlah hasil hitung</label>
-          <input id="qty" name="qty" className="input mono" inputMode="numeric" pattern="[0-9]+" required />
-        </div>
-        <div>
-          <label htmlFor="note" className="field-label">Catatan (opsional)</label>
-          <input id="note" name="note" className="input" maxLength={280} />
-        </div>
-        <button className="btn btn-primary">Simpan opname</button>
-      </form>
-      <section>
-        <h2 className="eyebrow mb-2 text-ink-2">Stok tercatat</h2>
-        <ul className="card divide-y divide-line">
-          {((levels.data ?? []) as StockLevel[]).map((l) => (
-            <li key={`${l.item_id}-${l.location_id}`} className="flex justify-between px-3.5 py-3 text-sm">
-              <span>{l.name} <span className="mono text-ink-2">· {l.location_code}</span></span>
-              <span className="mono">{l.qty} {l.unit}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start lg:gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Hasil hitung fisik</CardTitle>
+            <CardDescription>Selisihnya dicatat sebagai mutasi OPNAME. Riwayat lama tidak diubah.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form action={opname}>
+              <FieldGroup className="gap-4">
+                <Field>
+                  <FieldLabel htmlFor="item">Barang</FieldLabel>
+                  <NativeSelect id="item" name="item" required defaultValue="">
+                    <NativeSelectOption value="" disabled>Pilih barang habis pakai</NativeSelectOption>
+                    {(items.data ?? []).map((i: { name: string }) => <NativeSelectOption key={i.name} value={i.name}>{i.name}</NativeSelectOption>)}
+                  </NativeSelect>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="location">Lokasi</FieldLabel>
+                  <NativeSelect id="location" name="location" required defaultValue="">
+                    <NativeSelectOption value="" disabled>Pilih lokasi</NativeSelectOption>
+                    {((locs.data ?? []) as Location[]).map((l) => <NativeSelectOption key={l.id} value={l.id}>{l.code} · {l.name}</NativeSelectOption>)}
+                  </NativeSelect>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="qty">Jumlah hasil hitung</FieldLabel>
+                  <Input id="qty" name="qty" className="font-mono" inputMode="numeric" pattern="[0-9]+" required />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="note">Catatan (opsional)</FieldLabel>
+                  <Input id="note" name="note" maxLength={280} />
+                </Field>
+                <Button>Simpan opname</Button>
+              </FieldGroup>
+            </form>
+          </CardContent>
+        </Card>
+
+        <section className="flex flex-col gap-2">
+          <h2 className="eyebrow text-muted-foreground">Stok tercatat</h2>
+          <Card className="gap-0 p-0 md:hidden">
+            <ul>
+              {stock.map((l) => (
+                <li key={`${l.item_id}-${l.location_id}`} className="flex justify-between border-b px-3.5 py-3 text-sm last:border-b-0">
+                  <span>{l.name} <span className="font-mono text-muted-foreground">· {l.location_code}</span></span>
+                  <span className="font-mono">{l.qty} {l.unit}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader><TableRow><TableHead>Barang</TableHead><TableHead className="w-32">Lokasi</TableHead><TableHead className="w-28">Sisa</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {stock.map((l) => (
+                  <TableRow key={`${l.item_id}-${l.location_id}`}>
+                    <TableCell className="font-semibold">{l.name}</TableCell>
+                    <TableCell className="font-mono">{l.location_code}</TableCell>
+                    <TableCell className="font-mono">{l.qty} {l.unit}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </section>
+      </div>
     </>
   );
 }

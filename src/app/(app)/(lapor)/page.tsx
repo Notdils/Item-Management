@@ -31,35 +31,38 @@ export default async function LaporPage({ searchParams }: { searchParams: Promis
     ? { item: sp.item.slice(0, 80), action: ACTIONS.find((a) => a === sp.aksi) ?? "TARUH" }
     : undefined;
 
+  const header = (
+    <header className="flex flex-col gap-2">
+      <p className="eyebrow text-primary">Halo, {profile.full_name} · {profile.division}</p>
+      <h1 className="title">Taruh atau ambil barang</h1>
+    </header>
+  );
+  const aside = recentRows.length > 0 ? (
+    <section aria-labelledby="recent" className="flex flex-col gap-2">
+      <h2 id="recent" className="eyebrow text-muted-foreground">Laporan terakhir kamu</h2>
+      <div className="flex flex-col gap-2 md:grid md:grid-cols-2 md:gap-3 lg:flex lg:flex-col lg:gap-2">
+        {recentRows.map((r) => (
+          <ItemRow key={r.id} href={r.items ? `/barang/${r.items.id}` : undefined}
+            name={r.items?.name ?? "-"}
+            meta={`${r.kind === "TARUH" ? r.locations?.code ?? "-" : "Kamu bawa"} · ${fmtAgo(r.created_at)}`}
+            status={r.kind === "TARUH" ? "Ditaruh" : "Diambil"} tone={r.kind === "TARUH" ? "ok" : "warn"}
+            photo={r.photo_path ? photos.get(r.photo_path) : null} />
+        ))}
+      </div>
+    </section>
+  ) : null;
+
   return (
-    <>
-      <header className="flex flex-col gap-2">
-        <p className="eyebrow text-green">Halo, {profile.full_name} · {profile.division}</p>
-        <h1 className="title">Taruh atau ambil barang</h1>
-      </header>
-
-      <Reporter
-        key={prefill ? `${prefill.item}-${prefill.action}` : "blank"}
-        uid={profile.id}
-        isPlss={profile.division === "PLSS"}
-        items={(items.data ?? []) as ItemOption[]}
-        locations={(locations.data ?? []) as Location[]}
-        stock={(stock.data ?? []) as StockLevel[]}
-        prefill={prefill}
-      />
-
-      {recentRows.length > 0 && (
-        <section aria-labelledby="recent" className="flex flex-col gap-2">
-          <h2 id="recent" className="eyebrow text-ink-2">Laporan terakhir kamu</h2>
-          {recentRows.map((r) => (
-            <ItemRow key={r.id} href={r.items ? `/barang/${r.items.id}` : undefined}
-              name={r.items?.name ?? "-"}
-              meta={`${r.kind === "TARUH" ? r.locations?.code ?? "-" : "Kamu bawa"} · ${fmtAgo(r.created_at)}`}
-              status={r.kind === "TARUH" ? "Ditaruh" : "Diambil"} tone={r.kind === "TARUH" ? "green" : "warn"}
-              photo={r.photo_path ? photos.get(r.photo_path) : null} />
-          ))}
-        </section>
-      )}
-    </>
+    <Reporter
+      key={prefill ? `${prefill.item}-${prefill.action}` : "blank"}
+      uid={profile.id}
+      isPlss={profile.division === "PLSS"}
+      items={(items.data ?? []) as ItemOption[]}
+      locations={(locations.data ?? []) as Location[]}
+      stock={(stock.data ?? []) as StockLevel[]}
+      prefill={prefill}
+      header={header}
+      aside={aside}
+    />
   );
 }
