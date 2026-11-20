@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Flash } from "./Flash";
+import { roleLabel } from "@/lib/team";
 import { updateName } from "./actions";
 
 export const metadata: Metadata = { title: "Akun" };
@@ -30,7 +31,7 @@ export default async function AkunPage({ searchParams }: { searchParams: Promise
     menu = [
       { href: "/akun/lokasi", label: "Lokasi & rak", meta: `${loc} lokasi` },
       { href: "/akun/barang", label: "Daftar barang", meta: `${items} barang` },
-      { href: "/akun/opname", label: "Opname stok", meta: `${kinds} jenis` },
+      { href: "/akun/opname", label: "Hitung ulang stok", meta: `${kinds} jenis` },
       { href: "/akun/anggota", label: "Anggota", meta: `${members} akun` },
       { href: "/akun/ekspor", label: "Ekspor riwayat (CSV)", meta: "semua laporan", download: true },
     ];
@@ -39,7 +40,7 @@ export default async function AkunPage({ searchParams }: { searchParams: Promise
   return (
     <>
       <header className="flex flex-col gap-1.5">
-        <p className="eyebrow text-muted-foreground">{plss ? "PLSS, admin data" : "Teknikal"}</p>
+        <p className="eyebrow text-muted-foreground">{roleLabel(profile.division, profile.team)}</p>
         <h1 className="title">{profile.full_name}</h1>
       </header>
       <Flash {...sp} />

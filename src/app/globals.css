@@ -112,12 +112,12 @@ input:user-invalid, select:user-invalid { border-color: var(--destructive); }
   /* Judul halaman */
   .title {
     font-weight: 900;
-    font-size: 2.25rem;
-    line-height: 1;
-    letter-spacing: -0.025em;
+    font-size: 1.75rem;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
   }
-  @media (min-width: 768px) { .title { font-size: 3rem; } }
-  @media (min-width: 1024px) { .title { font-size: 3.5rem; } }
+  @media (min-width: 768px) { .title { font-size: 2.125rem; } }
+  @media (min-width: 1024px) { .title { font-size: 2.375rem; } }
 
   /* Kode rak sebagai data: chip mono. Versi yang bisa diganti memakai .rack-select (garis hijau + ▾). */
   .rack {

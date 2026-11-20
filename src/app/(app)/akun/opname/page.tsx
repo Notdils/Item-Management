@@ -12,7 +12,7 @@ import type { Location, StockLevel } from "@/lib/types";
 import { AdminHead, Flash } from "../Flash";
 import { opname } from "../actions";
 
-export const metadata: Metadata = { title: "Opname stok" };
+export const metadata: Metadata = { title: "Hitung ulang stok" };
 
 export default async function OpnamePage({ searchParams }: { searchParams: Promise<{ pesan?: string; galat?: string }> }) {
   const sp = await searchParams;
@@ -27,13 +27,13 @@ export default async function OpnamePage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <AdminHead title="Opname stok" />
+      <AdminHead title="Hitung ulang stok" />
       <Flash {...sp} />
       <div className="flex flex-col gap-5 lg:grid lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start lg:gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Hasil hitung fisik</CardTitle>
-            <CardDescription>Selisihnya dicatat sebagai mutasi OPNAME. Riwayat lama tidak diubah.</CardDescription>
+            <CardDescription>Hitung barang di rak, lalu isi jumlah sebenarnya. Selisih dengan catatan aplikasi dicatat otomatis (stok opname); riwayat lama tidak diubah.</CardDescription>
           </CardHeader>
           <CardContent>
             <form action={opname}>
@@ -60,7 +60,7 @@ export default async function OpnamePage({ searchParams }: { searchParams: Promi
                   <FieldLabel htmlFor="note">Catatan (opsional)</FieldLabel>
                   <Input id="note" name="note" maxLength={280} />
                 </Field>
-                <SubmitButton pendingText="Menyimpan...">Simpan opname</SubmitButton>
+                <SubmitButton pendingText="Menyimpan...">Simpan hasil hitung</SubmitButton>
               </FieldGroup>
             </form>
           </CardContent>

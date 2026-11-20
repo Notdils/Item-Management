@@ -57,7 +57,7 @@ export default async function BarangPage({ params }: { params: Promise<{ id: str
         <History title="Riwayat stok" entries={((moves.data ?? []) as unknown as Move[]).map((m) => ({
           id: m.id,
           when: fmtShort(m.created_at),
-          action: `${m.voids ? "Batal: " : ""}${m.kind === "MASUK" ? "Masuk" : m.kind === "PAKAI" ? "Dipakai" : "Opname"} ${m.qty_delta > 0 ? "+" : ""}${m.qty_delta}`,
+          action: `${m.voids ? "Batal: " : ""}${m.kind === "MASUK" ? "Masuk" : m.kind === "PAKAI" ? "Dipakai" : "Hitung ulang"} ${m.qty_delta > 0 ? "+" : ""}${m.qty_delta}`,
           where: m.locations?.code ?? "-",
           who: m.profiles?.full_name ?? "-",
           note: m.note,

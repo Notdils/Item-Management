@@ -68,7 +68,7 @@ export async function opname(f: FormData) {
   });
   if (error) back("/akun/opname", { err: error.message });
   const after = (data as { qty_after: number }[] | null)?.[0]?.qty_after;
-  back("/akun/opname", { ok: `Opname tersimpan. Stok sekarang ${after}.` });
+  back("/akun/opname", { ok: `Hasil hitung tersimpan. Stok sekarang ${after}.` });
 }
 
 export async function setDivision(f: FormData) {
@@ -88,7 +88,7 @@ export async function addMember(f: FormData) {
   } catch {
     back("/akun/anggota", { err: "SUPABASE_SECRET_KEY belum diisi di server" });
   }
-  const { error } = await admin.auth.admin.createUser({
+  const { data: created, error } = await admin.auth.admin.createUser({
     email: s(f, "email"),
     password: s(f, "password"),
     email_confirm: true,
@@ -96,7 +96,23 @@ export async function addMember(f: FormData) {
     app_metadata: { division }, // dibaca trigger tg_new_user
   });
   if (error) back("/akun/anggota", { err: error.message.includes("already") ? "Email sudah terdaftar" : error.message });
-  back("/akun/anggota", { ok: `Akun ${s(f, "email")} dibuat` });
+  const team = s(f, "team");
+  if (division === "TEKNIKAL" && (team === "MECHANICAL" || team === "ELECTRICAL") && created?.user) {
+    const supabase = await createClient();
+    const { error: teamErr } = await supabase.rpc("set_team", { p_user: created.user.id, p_team: team });
+    if (teamErr) back("/akun/anggota", { err: `Akun dibuat, tapi divisi tim gagal disimpan: ${teamErr.message}` });
+  }
+  back("/akun/anggota", { ok: `Akun ${s(f, "email")} dibuat${division === "TEKNIKAL" && team ? ` (Teknikal, ${team === "MECHANICAL" ? "Mechanical" : "Electrical"})` : ""}` });
+}
+
+export async function setTeam(f: FormData) {
+  await requirePlss();
+  const team = s(f, "team");
+  if (team !== "MECHANICAL" && team !== "ELECTRICAL") back("/akun/anggota", { err: "Pilih Mechanical atau Electrical" });
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_team", { p_user: s(f, "id"), p_team: team });
+  if (error) back("/akun/anggota", { err: error.message });
+  back("/akun/anggota", { ok: `Divisi tim ${s(f, "name")} diubah ke ${team === "MECHANICAL" ? "Mechanical" : "Electrical"}` });
 }
 
 export async function updateName(f: FormData) {

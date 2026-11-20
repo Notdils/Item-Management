@@ -3,7 +3,8 @@ export type ItemKind = "ALAT" | "HABIS_PAKAI";
 export type ReportKind = "TARUH" | "AMBIL";
 export type StockKind = "MASUK" | "PAKAI" | "OPNAME";
 
-export type Profile = { id: string; full_name: string; division: Division };
+export type Team = "MECHANICAL" | "ELECTRICAL";
+export type Profile = { id: string; full_name: string; division: Division; team: Team | null };
 export type Location = { id: number; code: string; name: string; archived_at: string | null };
 
 export type ItemOverview = {

@@ -96,7 +96,7 @@ export async function PlssBoard() {
                   ))}
                 </ul>
                 <Link href="/akun/opname" className="flex min-h-11 items-center justify-center gap-2 border-t px-4 text-sm font-semibold text-primary hover:bg-accent">
-                  Catat hasil hitung (opname)<LinkPending />
+                  Hitung ulang stok<LinkPending />
                 </Link>
               </Card>
             )}

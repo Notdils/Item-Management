@@ -74,7 +74,7 @@ PGHOST=<host> PGPORT=<port> bash supabase/tests/run_tests.sh
 ## Menjalankan
 
 ### 1. Supabase
-1. **SQL Editor**: jalankan semua migrasi berurutan: `supabase/migrations/20261119000000_init.sql`, `20261121000000_explicit_grants.sql`, lalu `20261121010000_undo.sql` (tombol Batalkan). Migrasi kedua wajib: sejak 30 Mei 2026 project Supabase baru tidak lagi memberi izin otomatis ke tabel `public` (changelog #45329, berlaku juga ke project lama mulai 30 Okt 2026). Tanpa itu login gagal dengan `permission denied for table profiles`.
+1. **SQL Editor**: jalankan semua migrasi berurutan: `supabase/migrations/20261119000000_init.sql`, `20261121000000_explicit_grants.sql`, `20261121010000_undo.sql` (tombol Batalkan), lalu `20261121020000_teams.sql` (divisi tim Mechanical/Electrical). Migrasi kedua wajib: sejak 30 Mei 2026 project Supabase baru tidak lagi memberi izin otomatis ke tabel `public` (changelog #45329, berlaku juga ke project lama mulai 30 Okt 2026). Tanpa itu login gagal dengan `permission denied for table profiles`.
 2. **Authentication → Sign In / Providers → Email**: matikan *Allow new users to sign up* (akun dibuat oleh PLSS).
 3. **Authentication → Users → Add user**: buat akun PLSS pertama (centang *Auto Confirm User*).
 4. **SQL Editor**: jalankan `supabase/bootstrap.sql` (ganti email PLSS di dalamnya kalau berbeda). Skrip ini juga membuatkan profil untuk akun yang dibuat sebelum migrasi.
@@ -102,6 +102,7 @@ supabase/
   bootstrap.sql           jadikan akun pertama PLSS
   seed_admin.sql          buat / reset akun admin PLSS dari SQL Editor
   seed.sql                rak + katalog barang awal produksi
+  seed_members.sql        akun anggota teknikal per divisi tim (Mechanical / Electrical)
   tests/                  tes skema + konkurensi
 src/
   app/(app)/(lapor)/      Lapor: page.tsx (kamera → form) + Reporter.tsx

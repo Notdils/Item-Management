@@ -2,14 +2,13 @@ import { SubmitButton } from "@/components/Pending";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { requirePlss } from "@/lib/session";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Profile } from "@/lib/types";
 import { AdminHead, Flash } from "../Flash";
-import { addMember, setDivision } from "../actions";
+import { addMember, setDivision, setTeam } from "../actions";
+import { TEAM_LABEL } from "@/lib/team";
 import { DivisionToggle } from "../DivisionToggle";
 
 export const metadata: Metadata = { title: "Anggota" };
@@ -24,12 +23,33 @@ function DivisionButton({ p }: { p: Profile }) {
   );
 }
 
+function TeamButton({ p }: { p: Profile }) {
+  const next = p.team === "MECHANICAL" ? "ELECTRICAL" : "MECHANICAL";
+  return (
+    <form action={setTeam}>
+      <input type="hidden" name="id" value={p.id} />
+      <input type="hidden" name="name" value={p.full_name} />
+      <input type="hidden" name="team" value={next} />
+      <SubmitButton variant="outline" size="sm" pendingText="Menyimpan...">
+        {p.team ? `Pindah ke ${TEAM_LABEL[next]}` : `Jadikan ${TEAM_LABEL[next]}`}
+      </SubmitButton>
+    </form>
+  );
+}
+
 export default async function AnggotaPage({ searchParams }: { searchParams: Promise<{ pesan?: string; galat?: string }> }) {
   const sp = await searchParams;
   const me = await requirePlss();
   const supabase = await createClient();
-  const { data } = await supabase.from("profiles").select("id, full_name, division").order("full_name");
+  const { data } = await supabase.from("profiles").select("id, full_name, division, team").order("full_name");
   const rows = (data ?? []) as Profile[];
+  // Dikelompokkan sesuai struktur tim: PLSS (non-teknikal), Mechanical, Electrical
+  const groups = [
+    { key: "plss", title: "PLSS", rows: rows.filter((p) => p.division === "PLSS") },
+    { key: "mech", title: "Teknikal, Mechanical", rows: rows.filter((p) => p.division === "TEKNIKAL" && p.team === "MECHANICAL") },
+    { key: "elec", title: "Teknikal, Electrical", rows: rows.filter((p) => p.division === "TEKNIKAL" && p.team === "ELECTRICAL") },
+    { key: "none", title: "Teknikal, belum ada divisi tim", rows: rows.filter((p) => p.division === "TEKNIKAL" && !p.team) },
+  ];
 
   return (
     <>
@@ -55,7 +75,7 @@ export default async function AnggotaPage({ searchParams }: { searchParams: Prom
                   <FieldDescription id="m-pass-help">Minimal 8 karakter. Berikan langsung ke orangnya.</FieldDescription>
                 </Field>
                 <FieldSet className="gap-2">
-                  <FieldLegend variant="label" className="sr-only">Divisi</FieldLegend>
+                  <FieldLegend variant="label">Divisi</FieldLegend>
                   <DivisionToggle />
                 </FieldSet>
                 <SubmitButton pendingText="Membuat akun...">Buat akun</SubmitButton>
@@ -64,34 +84,29 @@ export default async function AnggotaPage({ searchParams }: { searchParams: Prom
           </CardContent>
         </Card>
 
-        <div>
-          <Card className="gap-0 p-0 md:hidden">
-            <ul>
-              {rows.map((p) => (
-                <li key={p.id} className="flex items-center gap-3 border-b px-3.5 py-3 last:border-b-0">
-                  <span className="flex flex-1 flex-col gap-1">
-                    <span className="font-medium">{p.full_name}{p.id === me.id ? " (kamu)" : ""}</span>
-                    <Badge variant={p.division === "PLSS" ? "ok" : "muted"}>{p.division}</Badge>
-                  </span>
-                  {p.id !== me.id && <DivisionButton p={p} />}
-                </li>
-              ))}
-            </ul>
-          </Card>
-          <div className="hidden md:block">
-            <Table>
-              <TableHeader><TableRow><TableHead>Nama</TableHead><TableHead className="w-32">Divisi</TableHead><TableHead className="w-48"><span className="sr-only">Aksi</span></TableHead></TableRow></TableHeader>
-              <TableBody>
-                {rows.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-semibold">{p.full_name}{p.id === me.id ? " (kamu)" : ""}</TableCell>
-                    <TableCell><Badge variant={p.division === "PLSS" ? "ok" : "muted"}>{p.division}</Badge></TableCell>
-                    <TableCell>{p.id !== me.id && <DivisionButton p={p} />}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+        <div className="flex flex-col gap-6">
+          {groups.map((g) => g.rows.length > 0 && (
+            <section key={g.key} aria-labelledby={`g-${g.key}`} className="flex flex-col gap-2">
+              <h2 id={`g-${g.key}`} className="flex items-baseline gap-2 text-lg font-bold">
+                {g.title} <span className="font-mono text-base text-muted-foreground">{g.rows.length}</span>
+              </h2>
+              <Card className="gap-0 p-0">
+                <ul>
+                  {g.rows.map((p) => (
+                    <li key={p.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-3 last:border-b-0">
+                      <span className="min-w-[10rem] flex-1 font-medium">{p.full_name}{p.id === me.id ? " (kamu)" : ""}</span>
+                      {p.id !== me.id && (
+                        <span className="flex flex-wrap gap-2">
+                          {p.division === "TEKNIKAL" && <TeamButton p={p} />}
+                          <DivisionButton p={p} />
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </section>
+          ))}
         </div>
       </div>
     </>

@@ -27,7 +27,7 @@ const navFor = (plss: boolean, overdue: number): NavItem[] => plss
 const KELOLA: NavItem[] = [
   { href: "/akun/lokasi", label: "Lokasi & rak", icon: MapPin },
   { href: "/akun/barang", label: "Daftar barang", icon: Tags },
-  { href: "/akun/opname", label: "Opname stok", icon: ClipboardCheck },
+  { href: "/akun/opname", label: "Hitung ulang stok", icon: ClipboardCheck },
   { href: "/akun/anggota", label: "Anggota", icon: Users },
 ];
 
@@ -58,7 +58,6 @@ function NavList({ items, path, label }: { items: NavItem[]; path: string; label
 const initials = (name: string) =>
   name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("") || "?";
 
-const divisionLabel = (d: string) => (d === "PLSS" ? "PLSS, admin data" : "Teknikal");
 
 function Avatar({ name, className }: { name: string; className?: string }) {
   return (
@@ -84,7 +83,7 @@ const navItem = (on: boolean) =>
       : "text-muted-foreground hover:bg-accent/60 hover:text-foreground");
 
 // Navigasi desktop (>= 1024px). Akun = blok profil di kiri bawah (pola umum Slack/Notion/Vercel).
-export function Sidebar({ name, division, overdue = 0 }: { name: string; division: string; overdue?: number }) {
+export function Sidebar({ name, division, role, overdue = 0 }: { name: string; division: string; role: string; overdue?: number }) {
   const path = usePathname();
   const onAkun = path === "/akun";
   return (
@@ -108,7 +107,7 @@ export function Sidebar({ name, division, overdue = 0 }: { name: string; divisio
         <Avatar name={name} className={onAkun ? "bg-primary text-primary-foreground" : undefined} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[15px] font-semibold text-foreground">{name}</span>
-          <span className="block truncate text-[13px] text-muted-foreground">{divisionLabel(division)}</span>
+          <span className="block truncate text-[13px] text-muted-foreground">{role}</span>
         </span>
         <LinkPending><ChevronRight aria-hidden className="size-4 text-muted-foreground" /></LinkPending>
       </Link>
@@ -117,7 +116,7 @@ export function Sidebar({ name, division, overdue = 0 }: { name: string; divisio
 }
 
 // Header tablet (768-1023px): akun di kanan atas
-export function TopBar({ name, division }: { name: string; division: string }) {
+export function TopBar({ name, role }: { name: string; role: string }) {
   const path = usePathname();
   return (
     <header className="sticky top-0 z-20 hidden h-16 items-center justify-between border-b bg-card px-12 md:flex lg:hidden">
@@ -126,7 +125,7 @@ export function TopBar({ name, division }: { name: string; division: string }) {
         className="flex min-h-11 items-center gap-2.5 rounded-full py-1 pr-3 pl-1 hover:bg-accent">
         <Avatar name={name} className="size-8 text-xs" />
         <span className="text-sm font-semibold">{name}</span>
-        <span className="text-[13px] text-muted-foreground">{division}</span>
+        <span className="text-[13px] text-muted-foreground">{role}</span>
       </Link>
     </header>
   );

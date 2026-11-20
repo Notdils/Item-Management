@@ -176,5 +176,21 @@ select pg_temp.expect_error($$select public.void_entry(p_move_id => (select min(
 reset role;
 do $$ begin raise notice 'OK undo: hanya pelapor, hanya terbaru, tidak bikin minus, tidak bisa dihapus'; end $$;
 
+-- ===== divisi tim teknikal (Mechanical / Electrical)
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000a', false);
+select public.set_division('00000000-0000-0000-0000-00000000000b', 'TEKNIKAL');
+select public.set_team('00000000-0000-0000-0000-00000000000b', 'ELECTRICAL');
+do $$ begin
+  assert (select team from public.profiles where id = '00000000-0000-0000-0000-00000000000b') = 'ELECTRICAL', 'tim tersimpan';
+end $$;
+select pg_temp.expect_error($$select public.set_team('00000000-0000-0000-0000-00000000000a', 'MECHANICAL')$$, '22023'); -- PLSS tidak punya tim
+select public.set_division('00000000-0000-0000-0000-00000000000b', 'PLSS');
+do $$ begin
+  assert (select team from public.profiles where id = '00000000-0000-0000-0000-00000000000b') is null, 'jadi PLSS: tim dikosongkan';
+  raise notice 'OK divisi tim: hanya teknikal, dikosongkan saat jadi PLSS';
+end $$;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000b', false);
+reset role;
 -- ===== konkurensi: kunci item menyerialkan pemakaian stok (dicek terpisah di run_tests.sh)
 \echo 'SEMUA TES LULUS'

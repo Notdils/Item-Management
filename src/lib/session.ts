@@ -10,7 +10,7 @@ export const getSessionProfile = cache(async (): Promise<{ uid: string | null; p
   const { data: claims } = await supabase.auth.getClaims();
   const uid = claims?.claims?.sub ?? null;
   if (!uid) return { uid: null, profile: null };
-  const { data, error } = await supabase.from("profiles").select("id, full_name, division").eq("id", uid).maybeSingle();
+  const { data, error } = await supabase.from("profiles").select("id, full_name, division, team").eq("id", uid).maybeSingle();
   // Gagal query (jaringan, izin) = error sungguhan: tampilkan error.tsx, jangan redirect.
   if (error) throw new Error(`Gagal membaca profil: ${error.message}`);
   return { uid, profile: (data as Profile | null) ?? null };

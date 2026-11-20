@@ -2,6 +2,7 @@ import { TabBar } from "@/components/TabBar";
 import { Sidebar, TopBar } from "@/components/Sidebar";
 import { requireProfile } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
+import { roleLabel } from "@/lib/team";
 
 // Mobile: tab bar bawah · Tablet (md): top bar + tab bar · Desktop (lg): sidebar kiri
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -15,9 +16,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
   return (
     <div className="lg:flex">
-      <Sidebar name={p.full_name} division={p.division} overdue={overdue} />
+      <Sidebar name={p.full_name} division={p.division} role={roleLabel(p.division, p.team)} overdue={overdue} />
       <div className="min-w-0 flex-1">
-        <TopBar name={p.full_name} division={p.division} />
+        <TopBar name={p.full_name} role={roleLabel(p.division, p.team)} />
         <main className="mx-auto flex max-w-md flex-col gap-5 px-4 pt-[max(3.5rem,env(safe-area-inset-top))] pb-[calc(var(--tabbar-h)+2rem+env(safe-area-inset-bottom))] md:max-w-[800px] md:gap-6 md:px-12 md:pt-8 lg:max-w-[1120px] lg:pb-16 lg:pt-12">
           {children}
         </main>
