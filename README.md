@@ -30,13 +30,61 @@ erDiagram
   reports |o--o| voids : dibatalkan
   stock_moves |o--o| voids : dibatalkan
 
-  profiles { uuid id PK "= auth.users.id" text full_name "division TEKNIKAL|PLSS" "team MECHANICAL|ELECTRICAL|null" }
-  locations { bigint id PK text code UK text name timestamptz archived_at }
-  items { bigint id PK text name text name_key "generated, unik di barang aktif" item_kind kind text unit timestamptz archived_at }
-  reports { bigint id PK bigint item_id FK report_kind kind "TARUH|AMBIL" bigint location_id FK uuid user_id FK text photo_path timestamptz taken_at timestamptz created_at float lat float lng }
-  stock_moves { bigint id PK bigint item_id FK bigint location_id FK stock_kind kind "MASUK|PAKAI|OPNAME" int qty_delta uuid user_id FK timestamptz created_at }
-  item_merges { bigint id PK bigint from_item_id FK bigint into_item_id FK int moved_reports int moved_moves }
-  voids { bigint id PK bigint report_id "FK, unik" bigint move_id "FK, unik" uuid voided_by FK timestamptz voided_at }
+  profiles {
+    uuid id PK "sama dengan auth.users.id"
+    text full_name
+    division division "TEKNIKAL atau PLSS"
+    tech_team team "MECHANICAL atau ELECTRICAL, kosong untuk PLSS"
+  }
+  locations {
+    bigint id PK
+    text code UK "format RAK-A"
+    text name
+    timestamptz archived_at
+  }
+  items {
+    bigint id PK
+    text name
+    text name_key "generated, unik di barang aktif"
+    item_kind kind "ALAT atau HABIS_PAKAI"
+    text unit
+    timestamptz archived_at
+  }
+  reports {
+    bigint id PK
+    bigint item_id FK
+    report_kind kind "TARUH atau AMBIL"
+    bigint location_id FK
+    uuid user_id FK
+    text photo_path
+    timestamptz taken_at "jam di HP"
+    timestamptz created_at "jam server"
+    float lat
+    float lng
+  }
+  stock_moves {
+    bigint id PK
+    bigint item_id FK
+    bigint location_id FK
+    stock_kind kind "MASUK, PAKAI, atau OPNAME"
+    int qty_delta
+    uuid user_id FK
+    timestamptz created_at
+  }
+  item_merges {
+    bigint id PK
+    bigint from_item_id FK
+    bigint into_item_id FK
+    int moved_reports
+    int moved_moves
+  }
+  voids {
+    bigint id PK
+    bigint report_id FK "unik"
+    bigint move_id FK "unik"
+    uuid voided_by FK
+    timestamptz voided_at
+  }
 ```
 
 View (semua `security_invoker`, jadi RLS tetap berlaku):
