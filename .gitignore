@@ -43,3 +43,7 @@ next-env.d.ts
 
 # file sementara dari Claude
 /_to_delete/
+
+CONTEXT.md
+DECISION.md
+TODO.md
