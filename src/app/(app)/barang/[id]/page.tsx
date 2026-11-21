@@ -1,7 +1,9 @@
 import { LinkPending } from "@/components/Pending";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Hand, MapPin, PackageOpen } from "lucide-react";
+import { ChevronLeft, Hand, MapPin, PackageOpen, PackageX } from "lucide-react";
+import { requireProfile } from "@/lib/session";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { createClient } from "@/lib/supabase/server";
 import { signPhotos } from "@/lib/photos";
 import { fmtAgo, fmtShort, rackExtra } from "@/lib/format";
@@ -39,21 +41,35 @@ export default async function BarangPage({ params }: { params: Promise<{ id: str
         .eq("item_id", id).order("created_at", { ascending: false }).limit(30),
     ]);
     const lv = (levels.data ?? []) as StockLevel[];
+    const total = lv.reduce((n, l) => n + l.qty, 0);
+    const plss = (await requireProfile()).division === "PLSS";
     return (
       <>
         <BackLink />
         <Head label={`Habis pakai, dalam ${item.unit ?? "pcs"}`} name={item.name} />
-        {lv.length > 0 ? (
+        {lv.some((l) => l.qty > 0) ? (
           <Card className="gap-0 p-0">
-            {lv.map((l) => (
+            {lv.filter((l) => l.qty > 0).map((l) => (
               <div key={l.location_id} className="flex items-center justify-between border-b px-4 py-3.5 last:border-b-0">
                 <span className="flex items-center gap-2"><span className="rack text-sm">{l.location_code}</span> <span className="text-sm text-muted-foreground">{rackExtra(l.location_code, l.location_name)}</span></span>
                 <span className="font-mono text-xl font-medium">{l.qty}</span>
               </div>
             ))}
           </Card>
-        ) : <EmptyHistory text="Belum ada stok tercatat." />}
-        <Button asChild className="md:w-fit md:min-w-56"><Link href={`/lapor?item=${enc}&aksi=PAKAI`}><LinkPending />Pakai</Link></Button>
+        ) : null}
+        {total > 0 ? (
+          <Button asChild className="md:w-fit md:min-w-56"><Link href={`/lapor?item=${enc}&aksi=PAKAI`}><LinkPending />Pakai</Link></Button>
+        ) : (
+          // Stok habis: tombol Pakai tidak ditawarkan, jadi tidak pernah ada angka minus
+          <Alert variant="warning" role="status">
+            <PackageX aria-hidden />
+            <AlertDescription>
+              <p className="font-semibold text-foreground">Stok habis</p>
+              <p>{plss ? "Catat stok yang masuk lewat Hitung ulang stok." : "Menunggu PLSS menambah stok."}</p>
+              {plss && <Link href="/akun/opname" className="mt-1 inline-flex min-h-11 items-center gap-2 font-semibold text-primary">Hitung ulang stok<LinkPending /></Link>}
+            </AlertDescription>
+          </Alert>
+        )}
         <History title="Riwayat stok" entries={((moves.data ?? []) as unknown as Move[]).map((m) => ({
           id: m.id,
           when: fmtShort(m.created_at),

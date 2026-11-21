@@ -4,7 +4,7 @@ import { signPhotos } from "@/lib/photos";
 import { fmtAgo } from "@/lib/format";
 import { ItemRow } from "@/components/ItemRow";
 import type { ItemOption, Location, StockLevel } from "@/lib/types";
-import { Reporter, type Prefill } from "./Reporter";
+import { Reporter, type Held, type Prefill } from "./Reporter";
 
 type Supa = Awaited<ReturnType<typeof createClient>>;
 
@@ -18,13 +18,14 @@ export async function LaporScreen({ sp }: { sp: { item?: string; aksi?: string }
   const profile = await requireProfile();
   const supabase = await createClient();
 
-  const [items, locations, stock, recent] = await Promise.all([
+  const [items, locations, stock, recent, held] = await Promise.all([
     supabase.from("items").select("id, name, name_key, kind, unit").is("archived_at", null).order("name"),
     supabase.from("locations").select("id, code, name, archived_at").is("archived_at", null).order("code"),
     supabase.from("stock_levels").select("item_id, name, unit, location_id, location_code, location_name, qty, last_move_at"),
     supabase.from("reports")
       .select("id, kind, created_at, photo_path, items(id, name), locations(code), voids(id)")
       .eq("user_id", profile.id).order("created_at", { ascending: false }).limit(5),
+    supabase.from("held_items").select("item_id, user_id, user_name, reported_at"),
   ]);
   const recentRows = (recent.data ?? []) as unknown as Recent[];
   const photos = await signPhotos(supabase, recentRows.map((r) => r.photo_path));
@@ -64,6 +65,7 @@ export async function LaporScreen({ sp }: { sp: { item?: string; aksi?: string }
       items={(items.data ?? []) as ItemOption[]}
       locations={(locations.data ?? []) as Location[]}
       stock={(stock.data ?? []) as StockLevel[]}
+      held={(held.data ?? []) as Held[]}
       prefill={prefill}
       header={header}
       aside={aside}
@@ -79,7 +81,7 @@ async function buildPrefill(supabase: Supa, name: string, action: Prefill["actio
     // Pakai dari rak yang stoknya paling banyak
     const best = stock.filter((s) => s.item_id === item.id && s.qty > 0).sort((a, b) => b.qty - a.qty)[0];
     return { item: item.name, action: "PAKAI", locationId: best?.location_id,
-      context: best ? `Sisa ${best.qty} ${best.unit ?? ""} di ${best.location_code}` : "Stok kosong" };
+      context: best ? `Sisa ${best.qty} ${best.unit ?? ""} di ${best.location_code}` : "Stok habis, menunggu PLSS menambah stok" };
   }
   const { data: pos } = await supabase.from("item_positions")
     .select("kind, location_id, location_code, user_name, reported_at").eq("item_id", item.id).maybeSingle();

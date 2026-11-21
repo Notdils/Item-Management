@@ -4,9 +4,9 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { compressPhoto, photoExt } from "@/lib/image";
-import { errMessage, fmtDateTime, rackExtra, rackLabel } from "@/lib/format";
+import { errMessage, fmtDateTime, fmtDuration, rackExtra, rackLabel } from "@/lib/format";
 import type { ItemKind, ItemOption, Location, StockLevel } from "@/lib/types";
-import { Camera, ChevronDown, ChevronLeft, CircleCheck, Undo2, Clock, LocateFixed, MapPin, Minus, Plus, type LucideIcon } from "lucide-react";
+import { Camera, ChevronDown, ChevronLeft, CircleCheck, Hand, PackageX, Undo2, Clock, LocateFixed, MapPin, Minus, Plus, type LucideIcon } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,8 +41,11 @@ function saveLastLocation(id: number) {
   }
 }
 
-export function Reporter({ uid, isPlss, items, locations, stock, prefill, header, aside }: {
+export type Held = { item_id: number; user_id: string; user_name: string; reported_at: string };
+
+export function Reporter({ uid, isPlss, items, locations, stock, prefill, held = [], header, aside }: {
   uid: string; isPlss: boolean; items: ItemOption[]; locations: Location[]; stock: StockLevel[]; prefill?: Prefill;
+  held?: Held[];
   header?: React.ReactNode; aside?: React.ReactNode;
 }) {
   const router = useRouter();
@@ -99,6 +102,13 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
   const currentStock = kind === "HABIS_PAKAI" && match && locationId
     ? stock.find((s) => s.item_id === match.id && s.location_id === locationId)?.qty ?? 0
     : null;
+  // Pakai tidak boleh melebihi sisa: tidak pernah menampilkan angka minus
+  const short = effAction === "PAKAI" && currentStock !== null && qty > currentStock;
+  const otherRacks = kind === "HABIS_PAKAI" && match
+    ? stock.filter((st) => st.item_id === match.id && st.location_id !== locationId && st.qty > 0)
+    : [];
+  // Alat yang sedang dibawa orang lain: tampilkan siapa, supaya tidak dicari-cari
+  const holder = kind === "ALAT" && match ? held.find((h) => h.item_id === match.id) : undefined;
 
   function requestGps() {
     if (!("geolocation" in navigator)) return setGps({ state: "off" });
@@ -311,6 +321,17 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
           )}
         </Field>
         )}
+        {!locked && holder && (
+          <Alert role="status">
+            <Hand aria-hidden />
+            <AlertDescription>
+              <p className="text-foreground">
+                {holder.user_id === uid ? "Sedang kamu bawa" : <>Sedang dibawa <span className="font-semibold">{holder.user_name}</span></>}, sudah {fmtDuration(holder.reported_at)}.
+              </p>
+              <p>{holder.user_id === uid ? "Pilih Taruh untuk mengembalikan." : "Pilih Taruh kalau kamu yang mengembalikannya ke rak."}</p>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {isNew && isPlss && (
           <Segmented label="Jenis barang baru" value={newKind} onChange={(v) => setNewKind(v as ItemKind)} options={[
@@ -338,7 +359,8 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
                 </Button>
                 <Input id={`${ids}-qty`} className="text-center font-mono" inputMode="numeric" pattern="[0-9]*" value={qty}
                   onChange={(e) => setQty(Math.min(99999, Number(e.target.value.replace(/\D/g, "")) || 0))} />
-                <Button type="button" variant="outline" size="icon" className="size-13" aria-label="Tambah" onClick={() => setQty((q) => q + 1)}>
+                <Button type="button" variant="outline" size="icon" className="size-13" aria-label="Tambah" onClick={() => setQty((q) => q + 1)}
+                  disabled={effAction === "PAKAI" && currentStock !== null && qty >= currentStock}>
                   <Plus />
                 </Button>
               </div>
@@ -349,14 +371,26 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
                 <Input id={`${ids}-unit`} value={unit} onChange={(e) => setUnit(e.target.value)} maxLength={12} />
               </Field>
             )}
-            {currentStock !== null && (
+            {currentStock !== null && (effAction === "PAKAI" && currentStock <= 0 ? (
+              <Alert variant="warning" role="status">
+                <PackageX aria-hidden />
+                <AlertDescription>
+                  <p className="font-semibold text-foreground">Stok di {location?.code} habis</p>
+                  <p>{otherRacks.length > 0
+                    ? `Masih ada di ${otherRacks.map((o) => `${o.location_code} (${o.qty} ${o.unit ?? ""})`).join(", ")}. Pilih rak itu di Lokasi.`
+                    : "Menunggu PLSS menambah stok."}</p>
+                </AlertDescription>
+              </Alert>
+            ) : (
               <Card className="flex-row items-center justify-between px-3.5 py-3">
                 <span className="text-sm text-muted-foreground">Sisa di {location?.code}</span>
                 <span className="font-mono text-sm">
-                  {currentStock} → {currentStock + (effAction === "PAKAI" ? -qty : qty)} {match?.unit ?? ""}
+                  {short
+                    ? `${currentStock} ${match?.unit ?? ""}, maksimal ${currentStock}`
+                    : `${currentStock} → ${currentStock + (effAction === "PAKAI" ? -qty : qty)} ${match?.unit ?? ""}`}
                 </span>
               </Card>
-            )}
+            ))}
           </>
         )}
 
@@ -394,9 +428,9 @@ export function Reporter({ uid, isPlss, items, locations, stock, prefill, header
         {/* Mobile: tombol menempel di atas tab bar. Tablet/desktop: baris aksi biasa */}
         <div className="sticky bottom-[calc(var(--tabbar-h)+0.75rem+env(safe-area-inset-bottom))] z-10 md:static md:flex md:justify-end md:gap-3">
           <Button type="button" onClick={cancel} variant="outline" className="hidden md:inline-flex md:w-40">Batal</Button>
-          <Button type="submit" disabled={busy} className="w-full md:w-[220px]">
+          <Button type="submit" disabled={busy || short} className="w-full disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 md:w-[220px]">
             {busy && <Spinner data-icon="inline-start" />}
-            {busy ? "Mengirim..." : `Kirim: ${labelOf(effAction)}`}
+            {busy ? "Mengirim..." : short ? (currentStock && currentStock > 0 ? "Jumlah melebihi sisa" : "Stok habis") : `Kirim: ${labelOf(effAction)}`}
           </Button>
         </div>
       </FieldGroup>
@@ -439,7 +473,8 @@ function DoneNotice({ done, onClear }: { done: Done; onClear: () => void }) {
       done.reportId ? { p_report_id: done.reportId } : { p_move_id: done.moveId });
     if (error) { setState("error"); setMsg(errMessage(error)); return; }
     setState("undone");
-    try { sessionStorage.removeItem(DONE_KEY); } catch { /* abaikan */ }
+    // Disimpan (bukan dihapus): halaman bisa dimuat ulang tepat setelah ini, pesan "Dibatalkan" harus tetap ada
+    keepDone({ ...done, undone: true });
     router.refresh();
   }
 
