@@ -47,3 +47,5 @@ next-env.d.ts
 /CONTEXT.md
 /DECISION.md
 /TODO.md
+
+/.gitignore
