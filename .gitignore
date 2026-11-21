@@ -44,8 +44,12 @@ next-env.d.ts
 # file sementara dari Claude
 /_to_delete/
 
+# catatan kerja lokal (tidak untuk repo)
 /CONTEXT.md
-/DECISION.md
+/DECISIONS.md
 /TODO.md
 
-/.gitignore
+# alat bantu AI lokal (skill, agent, pengaturan Claude/Impeccable)
+/.claude/
+/.impeccable/
+/skills-lock.json
