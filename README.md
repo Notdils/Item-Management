@@ -106,7 +106,7 @@ View (semua `security_invoker`, jadi RLS tetap berlaku):
    - memastikan foto sudah ada di Storage dan berada di folder milik pelapor,
    - menormalkan nama barang (`"Kunci  Ring 10"` = `"kunci ring 10"`) lewat kolom generated `name_key` dan unique index parsial,
    - **mengunci baris barang** (`SELECT ... FOR UPDATE`), sehingga dua laporan bersamaan untuk barang yang sama diproses berurutan.
-5. **Constraint di database, bukan hanya di UI.**
+5. **Constraint di database.**
    - `TARUH` wajib punya lokasi dan foto; `AMBIL` tidak boleh punya lokasi (`CHECK`).
    - `MASUK` harus positif, `PAKAI` negatif (`CHECK delta_sign`).
    - Laporan posisi hanya untuk `ALAT`, mutasi stok hanya untuk `HABIS_PAKAI` (trigger `tg_check_item_kind`).
@@ -116,7 +116,7 @@ View (semua `security_invoker`, jadi RLS tetap berlaku):
    - Hanya anggota teknikal yang punya divisi tim (`CHECK team_only_teknikal`); dijadikan PLSS otomatis mengosongkan tim.
 6. **Dua jam.** `taken_at` = jam di HP (kapan foto diambil), `created_at` = jam server. Urutan memakai jam server karena jam HP bisa salah. Keduanya disimpan.
 7. **Hitung ulang stok (stok opname) tidak menimpa angka.** PLSS memasukkan hasil hitung fisik, lalu selisihnya dicatat sebagai mutasi `OPNAME`. Riwayat lama tetap utuh.
-8. **Divisi dan tim.** `division` (TEKNIKAL atau PLSS) menentukan hak akses. `team` (Mechanical atau Electrical, mengikuti struktur tim Anargya) hanya untuk pengelompokan anggota teknikal. Divisi diambil dari `app_metadata` (hanya bisa diisi admin), bukan `user_metadata` yang bisa diisi pengguna.
+8. **Divisi dan tim.** `division` (TEKNIKAL atau PLSS) menentukan hak akses. `team` (Mechanical atau Electrical) hanya untuk pengelompokan anggota teknikal. Divisi diambil dari `app_metadata` (hanya bisa diisi admin), bukan `user_metadata` yang bisa diisi pengguna.
 9. **Ekspor CSV** aman dari formula injection: sel yang diawali `= + - @` diberi awalan `'`.
 
 ## Referensi RPC
@@ -189,7 +189,7 @@ npm run dev                  # http://localhost:3000
 ```
 
 ### 3. Deploy (Vercel)
-Isi env `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, dan `SUPABASE_SECRET_KEY`. Secret key hanya di server (Vercel dan `.env.local`), jangan di-commit.
+Isi env `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, dan `SUPABASE_SECRET_KEY`. Secret key hanya di server (Vercel dan `.env.local`).
 
 ## Struktur backend
 
