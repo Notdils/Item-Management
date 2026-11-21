@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/session";
 import { signOut } from "@/app/login/actions";
@@ -83,7 +83,7 @@ export default async function AkunPage({ searchParams }: { searchParams: Promise
       </form>
 
       <form action={signOut}>
-        <SubmitButton variant="outline" className="w-full lg:w-[200px]" pendingText="Keluar...">Keluar</SubmitButton>
+        <SubmitButton variant="destructive" className="w-full bg-destructive text-[#1f0705] hover:bg-destructive/90 dark:bg-destructive lg:w-[200px]" pendingText="Keluar..."><LogOut aria-hidden />Keluar</SubmitButton>
       </form>
     </>
   );

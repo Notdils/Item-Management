@@ -1,3 +1,4 @@
+import { LogOut } from "lucide-react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -43,7 +44,7 @@ export default async function LoginPage() {
             <AlertDescription>
               <p>Kamu sudah masuk, tetapi data profil akun ini belum ada di database. Minta PLSS menjalankan <code>supabase/bootstrap.sql</code> atau membuatkan akun lewat menu Anggota.</p>
               <form action={signOut} className="mt-3">
-                <Button variant="outline">Keluar dan masuk dengan akun lain</Button>
+                <Button variant="destructive" className="bg-destructive text-[#1f0705] hover:bg-destructive/90 dark:bg-destructive"><LogOut aria-hidden />Keluar dan masuk dengan akun lain</Button>
               </form>
             </AlertDescription>
           </Alert>
