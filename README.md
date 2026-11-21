@@ -147,7 +147,7 @@ Semua fungsi butuh login (`28000 Harus login` kalau tidak). Error dikirim sebaga
 
 ## Tes
 
-`supabase/tests/run_tests.sh` menjalankan semua migrasi di Postgres biasa, memakai tiruan skema `auth` dan `storage` **tanpa izin default** (sama seperti project Supabase baru). Ada 40 pengecekan:
+`supabase/tests/run_tests.sh` menjalankan Bagian 1 `master.sql` (skema) di Postgres biasa, memakai tiruan skema `auth` dan `storage` **tanpa izin default** (sama seperti project Supabase baru). Ada 40 pengecekan:
 
 - izin per peran,
 - constraint,
@@ -167,19 +167,12 @@ PGHOST=<host> PGPORT=<port> bash supabase/tests/run_tests.sh
 
 ### 1. Supabase
 
-**Project baru (kosong):** jalankan `supabase/master.sql` di SQL Editor (Ctrl+A, lalu Run). Isinya keempat migrasi dan data awal (rak RAK-A sampai RAK-C dan katalog barang). Setiap query diberi komentar jenis dan nama objeknya, plus baris `-- Catatan:` untuk penjelasan tambahan.
-
-**Project yang sudah berjalan:** jalankan migrasi yang belum dijalankan, berurutan:
-1. `supabase/migrations/20261119000000_init.sql`: skema inti.
-2. `20261121000000_explicit_grants.sql`: grant eksplisit. Tanpa ini login gagal dengan `permission denied for table profiles`.
-3. `20261121010000_undo.sql`: pembatalan lewat `voids`.
-4. `20261121020000_teams.sql`: divisi tim Mechanical/Electrical.
-
-Lalu:
-- **Authentication → Sign In / Providers → Email**: matikan *Allow new users to sign up* (akun dibuat oleh PLSS).
-- `supabase/seed_admin.sql`: buat atau reset akun PLSS (isi kata sandi dulu).
-- `supabase/seed_members.sql`: akun teknikal Mechanical dan Electrical (isi kata sandi dulu).
-- `supabase/seed.sql`: rak dan katalog barang, kalau belum lewat `master.sql`. Stok diisi PLSS lewat Hitung ulang stok setelah hitung fisik.
+1. Buat project Supabase baru, buka **SQL Editor**, tempel seluruh isi `supabase/master.sql`, lalu Ctrl+A dan **Run**.
+   - **Bagian 1, Skema:** tabel, constraint, trigger, RPC, view, RLS, bucket foto, dan izin. Bagian ini hanya untuk database kosong.
+   - **Bagian 2, Data produksi:** rak RAK-A sampai RAK-C, katalog 26 barang, dan tiga akun di tabel "Akun penilaian". Bagian ini aman dijalankan ulang: akun yang sudah ada direset kata sandinya.
+   - Setiap query diberi baris `-- >` (jenis dan nama objek) dan `-- Catatan:` untuk penjelasan.
+2. **Authentication → Sign In / Providers → Email**: matikan *Allow new users to sign up*. Akun berikutnya dibuat PLSS dari menu Kelola → Anggota.
+3. Stok barang habis pakai diisi PLSS lewat **Hitung ulang stok** setelah hitung fisik.
 
 ### 2. Lokal
 ```bash
@@ -195,21 +188,25 @@ Isi env `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, dan 
 
 ```
 supabase/
-  master.sql                          semua migrasi + data awal dalam satu file (project baru)
-  migrations/20261119000000_init.sql  skema, constraint, trigger, RPC, view, RLS, storage
-  migrations/…_explicit_grants.sql    GRANT eksplisit untuk Data API
-  migrations/…_undo.sql               tabel voids + RPC void_entry, view mengabaikan laporan batal
-  migrations/…_teams.sql              divisi tim teknikal + RPC set_team
-  seed.sql                            rak + katalog barang awal
-  seed_admin.sql                      buat / reset akun PLSS
-  seed_members.sql                    akun teknikal per divisi tim
-  bootstrap.sql                       buat profil untuk akun lama + jadikan PLSS
-  tests/                              tes skema, pembatalan, tim, konkurensi
+  master.sql    satu file: skema (Bagian 1) + rak, katalog, akun awal (Bagian 2)
+  tests/        tes skema, pembatalan, divisi tim, konkurensi (menjalankan Bagian 1)
 ```
 
 ### Frontend (ringkas)
 
-Next.js 15 App Router, Tailwind v4, shadcn/ui, PWA. Bagian yang memanggil backend:
+Next.js 15 App Router, Tailwind v4, shadcn/ui. Bagian yang memanggil backend:
 - `src/lib/supabase/`: klien server, browser, dan admin (secret key, hanya di server).
 - `src/app/(app)/akun/actions.ts`: server actions PLSS (lokasi, barang, hitung ulang stok, anggota, divisi tim).
 - `src/app/(app)/(lapor)/Reporter.tsx`: unggah foto ke Storage, lalu panggil `report_item`, `move_stock`, atau `void_entry`.
+
+### PWA
+
+Aplikasi bisa di-install ke layar utama HP ("Tambahkan ke layar utama" / tombol Install di Chrome). Setelah di-install, aplikasi terbuka layar penuh tanpa bilah browser dan punya shortcut **Foto barang** dan **Cari barang** (tekan lama ikon).
+
+- **Kamera:** tombol foto langsung membuka kamera belakang HP. Foto dikompres di HP sebelum diunggah.
+- **Service worker** (`public/sw.js`) hanya menyimpan aset statis (JS, CSS, ikon), supaya aplikasi cepat terbuka. **Data tidak pernah disimpan di HP:** posisi barang dan stok selalu diambil terbaru dari server, jadi tidak ada data lama yang menyesatkan dan tidak ada data tim yang tertinggal di HP.
+- **Saat offline:**
+  - Membuka atau pindah halaman menampilkan layar "Tidak ada koneksi" dengan tombol Coba lagi.
+  - Form laporan yang sudah terbuka tetap bisa dipakai: kamera tetap jalan, foto dan nama tetap tersimpan selama aplikasi tidak ditutup. Saat Kirim ditekan, muncul pesan "Tidak ada koneksi. Coba lagi.", lalu laporan bisa dikirim ulang saat sinyal kembali.
+  - Waktu foto ikut tersimpan, jadi laporan yang terkirim belakangan tetap mencatat kapan barang difoto (`taken_at`), selain jam server saat diterima (`created_at`).
+  - Laporan tidak diantrekan di latar belakang. Kalau aplikasi ditutup sebelum laporan terkirim, laporannya hilang dan perlu diulang.

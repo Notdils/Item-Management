@@ -1,25 +1,25 @@
 -- =====================================================================
 -- MASTER SQL: Bengkel Anargya (sistem manajemen barang bengkel)
 -- =====================================================================
--- Isi: 4 migrasi berurutan + data awal (rak dan katalog barang) dalam satu file.
--- Untuk project Supabase BARU (kosong). Jalankan di SQL Editor: Ctrl+A, lalu Run.
--- Project yang sudah berjalan: jangan jalankan file ini; jalankan migrasi yang belum
--- dijalankan satu per satu dari supabase/migrations/.
+-- Satu file berisi semua yang dibutuhkan database produksi:
+--   BAGIAN 1  Skema: tabel, constraint, trigger, RPC, view, RLS, storage, izin
+--   BAGIAN 2  Data produksi: rak, katalog barang, akun awal
 --
--- Setelah ini (butuh kata sandi, jadi terpisah):
---   supabase/bootstrap.sql      jadikan akun pertama PLSS
---   supabase/seed_admin.sql     buat / reset akun admin PLSS
---   supabase/seed_members.sql   akun teknikal Mechanical / Electrical
+-- Cara pakai: project Supabase baru (kosong) -> SQL Editor -> tempel seluruh file -> Ctrl+A -> Run.
+-- Bagian 1 hanya untuk database kosong (membuat tabel). Bagian 2 aman dijalankan ulang.
+-- Setelah itu: Authentication -> Sign In / Providers -> Email -> matikan "Allow new users to sign up".
 --
--- Setiap query diberi komentar "-- >" (jenis + nama objek) dan baris "-- Catatan:"
--- kosong untuk penjelasan tambahan.
--- File ini DIBANGKITKAN dari file sumber; ubah file sumbernya, bukan file ini.
+-- Setiap query diberi baris "-- >" (jenis + nama objek) dan baris "-- Catatan:" untuk penjelasan.
+-- =====================================================================
+
+
+-- =====================================================================
+-- BAGIAN 1: SKEMA
 -- =====================================================================
 
 
 -- #####################################################################
--- MIGRASI 1: skema inti (tabel, constraint, trigger, RPC, view, RLS, storage)
--- Sumber: supabase/migrations/20261119000000_init.sql
+-- 1.1 Skema inti: tipe, tabel, constraint, trigger, RPC, view, RLS, storage
 -- #####################################################################
 
 -- > Tipe enum public.division
@@ -730,8 +730,7 @@ create policy photos_read_members on storage.objects for select to authenticated
 
 
 -- #####################################################################
--- MIGRASI 2: GRANT eksplisit untuk Data API (Supabase 2026)
--- Sumber: supabase/migrations/20261121000000_explicit_grants.sql
+-- 1.2 GRANT eksplisit untuk Data API (Supabase 2026 tidak memberi izin otomatis)
 -- #####################################################################
 
 -- > Izin: grant usage on schema public ke authenticated
@@ -777,8 +776,7 @@ revoke all on all tables in schema public from anon;
 
 
 -- #####################################################################
--- MIGRASI 3: batalkan laporan lewat tabel voids
--- Sumber: supabase/migrations/20261121010000_undo.sql
+-- 1.3 Batalkan laporan lewat tabel voids (riwayat tetap append-only)
 -- #####################################################################
 
 -- > Tabel public.voids
@@ -985,8 +983,7 @@ end $$;
 
 
 -- #####################################################################
--- MIGRASI 4: divisi tim teknikal (Mechanical / Electrical)
--- Sumber: supabase/migrations/20261121020000_teams.sql
+-- 1.4 Divisi tim teknikal (Mechanical / Electrical)
 -- #####################################################################
 
 -- > Tipe enum public.tech_team
@@ -1057,71 +1054,20 @@ revoke execute on function public.set_team(uuid, public.tech_team) from public, 
 grant execute on function public.set_team(uuid, public.tech_team) to authenticated;
 
 
+-- =====================================================================
+-- BAGIAN 2: DATA PRODUKSI
+-- =====================================================================
+
+
 -- #####################################################################
--- DATA AWAL: rak RAK-A sampai RAK-C dan katalog barang
--- Sumber: supabase/seed.sql
+-- 2.1 Rak dan katalog barang
 -- #####################################################################
-
--- > Mulai transaksi data awal
--- Catatan: 
--- Data awal produksi Bengkel Anargya.
--- Cara pakai: Supabase SQL Editor, tempel seluruh isi file, Ctrl+A, lalu Run.
--- Aman dijalankan ulang: rak dan barang yang sudah ada tidak diduplikasi.
---
--- 1. Bersihkan data uji coba awal (rak DEMO-*, barang berakhiran "(demo)") beserta riwayatnya.
--- 2. Rak bengkel: RAK-A, RAK-B, RAK-C.
--- 3. Katalog barang awal. Stok tidak diisi di sini: PLSS mencatatnya lewat Opname setelah
---    hitung fisik, supaya angka di aplikasi sama dengan isi rak.
-
-begin;
-
--- > Matikan sementara trigger reports_append_only di public.reports
--- Catatan: 
--- 1. Riwayat normalnya tidak bisa dihapus (trigger append-only),
---    jadi trigger dimatikan sementara hanya di dalam transaksi ini.
-alter table public.reports     disable trigger reports_append_only;
-
--- > Matikan sementara trigger stock_moves_append_only di public.stock_moves
--- Catatan: 
-alter table public.stock_moves disable trigger stock_moves_append_only;
-
--- > Hapus data uji di public.reports
--- Catatan: 
-delete from public.reports
- where item_id in (select id from public.items where name ilike '%(demo)%')
-    or location_id in (select id from public.locations where code like 'DEMO-%');
-
--- > Hapus data uji di public.stock_moves
--- Catatan: 
-delete from public.stock_moves
- where item_id in (select id from public.items where name ilike '%(demo)%')
-    or location_id in (select id from public.locations where code like 'DEMO-%');
-
--- > Hapus data uji di public.item_merges
--- Catatan: 
-delete from public.item_merges
- where from_item_id in (select id from public.items where name ilike '%(demo)%')
-    or into_item_id in (select id from public.items where name ilike '%(demo)%');
-
--- > Hapus data uji di public.items
--- Catatan: 
-delete from public.items     where name ilike '%(demo)%';
-
--- > Hapus data uji di public.locations
--- Catatan: 
-delete from public.locations where code like 'DEMO-%';
-
--- > Nyalakan lagi trigger reports_append_only di public.reports
--- Catatan: 
-alter table public.reports     enable trigger reports_append_only;
-
--- > Nyalakan lagi trigger stock_moves_append_only di public.stock_moves
--- Catatan: 
-alter table public.stock_moves enable trigger stock_moves_append_only;
 
 -- > Isi data public.locations
 -- Catatan: 
--- 2. Rak
+-- Rak bengkel dan katalog barang awal. Stok tidak diisi di sini: PLSS mencatatnya lewat
+-- Hitung ulang stok setelah hitung fisik, supaya angka di aplikasi sama dengan isi rak.
+-- Rak bengkel
 insert into public.locations (code, name) values
   ('RAK-A', 'Rak A'),
   ('RAK-B', 'Rak B'),
@@ -1130,7 +1076,7 @@ on conflict (code) do update set archived_at = null;
 
 -- > Isi data public.items
 -- Catatan: 
--- 3. Katalog barang awal (nama bisa diganti / diarsip PLSS di Akun > Daftar barang)
+-- Katalog barang awal (nama bisa diganti / diarsip PLSS di Akun > Daftar barang)
 insert into public.items (name, kind, unit)
 select v.name, v.kind::public.item_kind, v.unit
 from (values
@@ -1168,19 +1114,69 @@ where not exists (
   where i.archived_at is null and i.name_key = lower(regexp_replace(btrim(v.name), '\s+', ' ', 'g'))
 );
 
--- > Selesai transaksi data awal
+
+-- #####################################################################
+-- 2.2 Akun awal (PLSS, teknikal Mechanical, teknikal Electrical)
+-- #####################################################################
+
+-- > Blok DO
 -- Catatan: 
-commit;
+-- Akun awal: 1 PLSS + 2 teknikal (Mechanical, Electrical). Aman dijalankan ulang:
+-- akun yang sudah ada direset kata sandinya, profil diselaraskan.
+-- Ganti kata sandi di daftar ini sebelum dijalankan kalau tidak ingin memakai akun penilaian.
+do $$
+declare
+  r record;
+  v_id uuid;
+begin
+  for r in
+    select * from (values
+      -- email                     kata sandi    nama tampilan           divisi      tim
+      ('plss@example.com',         'plssadmin',  'PLSS',                 'PLSS',     null),
+      ('mechanical@example.com',   'teknikal',   'Teknikal Mechanical',  'TEKNIKAL', 'MECHANICAL'),
+      ('electrical@example.com',   'teknikal',   'Teknikal Electrical',  'TEKNIKAL', 'ELECTRICAL')
+    ) as t(email, password, full_name, division, team)
+  loop
+    if length(r.password) < 8 then
+      raise exception 'Kata sandi % minimal 8 karakter', r.email;
+    end if;
+    select id into v_id from auth.users where email = lower(r.email);
+    if v_id is null then
+      v_id := gen_random_uuid();
+      insert into auth.users (
+        instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+        raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+        confirmation_token, recovery_token, email_change_token_new, email_change
+      ) values (
+        '00000000-0000-0000-0000-000000000000', v_id, 'authenticated', 'authenticated', lower(r.email),
+        extensions.crypt(r.password, extensions.gen_salt('bf')), now(),
+        jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email'), 'division', r.division),
+        jsonb_build_object('full_name', r.full_name, 'email_verified', true), now(), now(),
+        '', '', '', ''
+      );
+      insert into auth.identities (id, user_id, provider_id, provider, identity_data, last_sign_in_at, created_at, updated_at)
+      values (gen_random_uuid(), v_id, v_id::text, 'email',
+              jsonb_build_object('sub', v_id::text, 'email', lower(r.email), 'email_verified', true),
+              now(), now(), now());
+    else
+      update auth.users
+         set encrypted_password = extensions.crypt(r.password, extensions.gen_salt('bf')),
+             email_confirmed_at = coalesce(email_confirmed_at, now()),
+             raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || jsonb_build_object('division', r.division),
+             updated_at = now()
+       where id = v_id;
+    end if;
+
+    insert into public.profiles (id, full_name, division, team)
+    values (v_id, r.full_name, r.division::public.division, r.team::public.tech_team)
+    on conflict (id) do update
+      set division = excluded.division, team = excluded.team;
+  end loop;
+end $$;
 
 -- > Cek hasil
 -- Catatan: 
--- Cek hasil: 3 rak, katalog per jenis, dan trigger riwayat harus aktif (tgenabled = O)
-select code, name from public.locations where archived_at is null order by code;
-
--- > Cek hasil
--- Catatan: 
-select kind, count(*) from public.items where archived_at is null group by kind;
-
--- > Cek hasil
--- Catatan: 
-select tgname, tgenabled from pg_trigger where tgname in ('reports_append_only', 'stock_moves_append_only');
+-- Cek hasil: akun dan perannya
+select u.email, p.full_name, p.division, p.team
+  from auth.users u join public.profiles p on p.id = u.id
+ order by p.division desc, p.team nulls first;

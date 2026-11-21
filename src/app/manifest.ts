@@ -19,7 +19,7 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icons/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     shortcuts: [
-      { name: "Foto barang", url: "/", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
+      { name: "Foto barang", url: "/lapor", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
       { name: "Cari barang", url: "/cari", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
     ],
   };
